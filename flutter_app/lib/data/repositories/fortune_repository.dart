@@ -67,6 +67,7 @@ class FortuneRepository {
 
   /// Create a new fortune reading
   /// Uploads images and calls edge function
+  /// Uses XFile for cross-platform compatibility
   Future<FortuneReading> createFortuneReading({
     required FortuneIntent intent,
     required XFile cupImage,

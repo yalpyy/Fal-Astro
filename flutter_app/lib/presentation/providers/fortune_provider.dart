@@ -1,11 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/fortune_reading.dart';
 import '../../data/models/fortune_feedback.dart';
 import '../../data/repositories/fortune_repository.dart';
 import '../../data/services/storage_service.dart';
 import '../../data/services/functions_service.dart';
 import '../../data/services/local_cache_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'auth_provider.dart';
 
 /// Storage service provider
@@ -156,10 +157,11 @@ class CreateFortuneNotifier extends StateNotifier<CreateFortuneState> {
   CreateFortuneNotifier(this._repository, this._listNotifier)
       : super(const CreateFortuneState());
 
+  /// Create fortune using XFile (cross-platform compatible)
   Future<void> createFortune({
     required FortuneIntent intent,
-    required File cupImage,
-    File? saucerImage,
+    required XFile cupImage,
+    XFile? saucerImage,
     String? customNote,
     String locale = 'tr',
   }) async {

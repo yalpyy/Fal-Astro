@@ -27,7 +27,7 @@ class AppAuthException extends AppException {
       : super(message, code);
 }
 
-/// Storage exception
+/// Storage exception (renamed to avoid conflict with Supabase)
 class AppStorageException extends AppException {
   const AppStorageException([String message = 'Storage error occurred'])
       : super(message);

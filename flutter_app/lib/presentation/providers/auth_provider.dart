@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../env/env.dart';
 
 /// Auth state enum
 enum AuthStatus {
@@ -8,6 +9,7 @@ enum AuthStatus {
   authenticated,
   unauthenticated,
   loading,
+  unconfigured,
 }
 
 /// Auth state
@@ -36,27 +38,51 @@ class AuthState {
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
   bool get isLoading => status == AuthStatus.loading;
+  bool get isUnconfigured => status == AuthStatus.unconfigured;
 }
 
-/// Supabase client provider
+/// Supabase client provider - returns null if not configured
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
+  if (!Env.isConfigured) {
+    throw StateError('Supabase is not configured');
+  }
   return Supabase.instance.client;
 });
 
+/// Safe supabase client provider - returns null if not configured
+final safeSupabaseClientProvider = Provider<SupabaseClient?>((ref) {
+  if (!Env.isConfigured) {
+    return null;
+  }
+  try {
+    return Supabase.instance.client;
+  } catch (e) {
+    return null;
+  }
+});
+
 /// Auth repository provider
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepository(ref.watch(supabaseClientProvider));
+final authRepositoryProvider = Provider<AuthRepository?>((ref) {
+  final client = ref.watch(safeSupabaseClientProvider);
+  if (client == null) return null;
+  return AuthRepository(client);
 });
 
 /// Auth state notifier
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository _authRepository;
+  final AuthRepository? _authRepository;
 
   AuthNotifier(this._authRepository) : super(const AuthState()) {
     _init();
   }
 
   void _init() {
+    // If auth repository is null, we're in unconfigured/demo mode
+    if (_authRepository == null) {
+      state = const AuthState(status: AuthStatus.unconfigured);
+      return;
+    }
+
     // Check current user
     final user = _authRepository.currentUser;
     if (user != null) {
@@ -79,6 +105,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signInWithEmail(String email, String password) async {
+    if (_authRepository == null) {
+      state = state.copyWith(error: 'Supabase is not configured');
+      return;
+    }
+
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
       final user = await _authRepository.signInWithEmail(
@@ -99,6 +130,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String password, {
     String? name,
   }) async {
+    if (_authRepository == null) {
+      state = state.copyWith(error: 'Supabase is not configured');
+      return;
+    }
+
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
       final user = await _authRepository.signUpWithEmail(
@@ -116,6 +152,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signInWithApple() async {
+    if (_authRepository == null) {
+      state = state.copyWith(error: 'Supabase is not configured');
+      return;
+    }
+
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
       final user = await _authRepository.signInWithApple();
@@ -129,6 +170,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signInWithAppleNative(String idToken, String nonce) async {
+    if (_authRepository == null) {
+      state = state.copyWith(error: 'Supabase is not configured');
+      return;
+    }
+
     state = state.copyWith(status: AuthStatus.loading, error: null);
     try {
       final user = await _authRepository.signInWithAppleNative(
@@ -145,6 +191,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> sendPasswordResetEmail(String email) async {
+    if (_authRepository == null) {
+      state = state.copyWith(error: 'Supabase is not configured');
+      return;
+    }
+
     try {
       await _authRepository.sendPasswordResetEmail(email);
     } catch (e) {
@@ -153,11 +204,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
+    if (_authRepository == null) return;
     await _authRepository.signOut();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
   Future<void> deleteAccount() async {
+    if (_authRepository == null) return;
     await _authRepository.deleteAccount();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }

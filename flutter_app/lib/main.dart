@@ -12,25 +12,31 @@ import 'data/services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Validate environment
-  Env.validate();
+  // Validate environment - returns false if not configured
+  final isConfigured = Env.validate();
 
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: Env.supabaseUrl,
-    anonKey: Env.supabaseAnonKey,
-  );
+  // Initialize Supabase only if configured
+  if (isConfigured) {
+    await Supabase.initialize(
+      url: Env.supabaseUrl,
+      anonKey: Env.supabaseAnonKey,
+    );
 
-  // Initialize notifications (only on mobile)
-  if (!kIsWeb) {
-    await NotificationService().initialize();
+    // Initialize notifications (only on mobile)
+    if (!kIsWeb) {
+      await NotificationService().initialize();
+    }
+  } else {
+    debugPrint('Running in demo mode - Supabase not configured');
   }
 
-  // Set preferred orientations
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // Set preferred orientations (skip on web)
+  if (!kIsWeb) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
 
   // Error handling for web debugging
   if (kIsWeb) {

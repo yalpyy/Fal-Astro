@@ -20,6 +20,8 @@ class FortuneUploadScreen extends ConsumerStatefulWidget {
 class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
   XFile? _cupImage;
   XFile? _saucerImage;
+  Uint8List? _cupImageBytes;
+  Uint8List? _saucerImageBytes;
   FortuneIntent _intent = FortuneIntent.general;
   final _noteController = TextEditingController();
 
@@ -39,11 +41,14 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
     );
 
     if (picked != null) {
+      final bytes = await picked.readAsBytes();
       setState(() {
         if (isCup) {
           _cupImage = picked;
+          _cupImageBytes = bytes;
         } else {
           _saucerImage = picked;
+          _saucerImageBytes = bytes;
         }
       });
     }
@@ -59,17 +64,26 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
     );
 
     if (picked != null) {
+      final bytes = await picked.readAsBytes();
       setState(() {
         if (isCup) {
-          _cupImage = File(picked.path);
+          _cupImage = picked;
+          _cupImageBytes = bytes;
         } else {
-          _saucerImage = File(picked.path);
+          _saucerImage = picked;
+          _saucerImageBytes = bytes;
         }
       });
     }
   }
 
   void _showImageSourceDialog(bool isCup) {
+    // On web, only gallery is reliably supported
+    if (kIsWeb) {
+      _pickFromGallery(isCup);
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -161,10 +175,13 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
               ),
               const SizedBox(height: 8),
               _ImagePickerCard(
-                image: _cupImage,
+                imageBytes: _cupImageBytes,
                 placeholder: Icons.coffee,
                 onTap: () => _showImageSourceDialog(true),
-                onRemove: () => setState(() => _cupImage = null),
+                onRemove: () => setState(() {
+                  _cupImage = null;
+                  _cupImageBytes = null;
+                }),
               ),
               const SizedBox(height: 24),
 
@@ -175,10 +192,13 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
               ),
               const SizedBox(height: 8),
               _ImagePickerCard(
-                image: _saucerImage,
+                imageBytes: _saucerImageBytes,
                 placeholder: Icons.circle_outlined,
                 onTap: () => _showImageSourceDialog(false),
-                onRemove: () => setState(() => _saucerImage = null),
+                onRemove: () => setState(() {
+                  _saucerImage = null;
+                  _saucerImageBytes = null;
+                }),
               ),
               const SizedBox(height: 24),
 
@@ -252,13 +272,13 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
 }
 
 class _ImagePickerCard extends StatelessWidget {
-  final XFile? image;
+  final Uint8List? imageBytes;
   final IconData placeholder;
   final VoidCallback onTap;
   final VoidCallback onRemove;
 
   const _ImagePickerCard({
-    this.image,
+    this.imageBytes,
     required this.placeholder,
     required this.onTap,
     required this.onRemove,
@@ -270,19 +290,15 @@ class _ImagePickerCard extends StatelessWidget {
       aspectRatio: 1,
       child: Card(
         clipBehavior: Clip.antiAlias,
-        child: image != null
-            ? FutureBuilder<Uint8List>(
-                future: image!.readAsBytes(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                    return Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.memory(snapshot.data!, fit: BoxFit.cover),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: IconButton.filled(
+        child: imageBytes != null
+            ? Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.memory(imageBytes!, fit: BoxFit.cover),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton.filled(
                       onPressed: onRemove,
                       icon: const Icon(Icons.close),
                     ),

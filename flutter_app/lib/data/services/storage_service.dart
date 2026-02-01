@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/supabase_constants.dart';
+import '../../core/errors/exceptions.dart';
 
 /// Supabase Storage service for file uploads
 class StorageService {
@@ -11,7 +12,7 @@ class StorageService {
 
   StorageService(this._client);
 
-  /// Upload fortune cup image
+  /// Upload fortune cup image using XFile (cross-platform)
   /// Returns the storage path
   Future<String> uploadCupImage({
     required String userId,
@@ -26,19 +27,17 @@ class StorageService {
       final bytes = await imageFile.readAsBytes();
       await _client.storage
           .from(SupabaseConstants.fortuneImagesBucket)
-          .uploadBinary(path, bytes);
+          .uploadBinary(path, bytes, fileOptions: const FileOptions(
+            contentType: 'image/jpeg',
+          ));
 
       return path;
     } on StorageException catch (e) {
-      throw StorageException(
-        'Failed to upload cup image: ${e.message}',
-        statusCode: e.statusCode,
-        error: e.error,
-      );
+      throw AppStorageException('Failed to upload cup image: ${e.message}');
     }
   }
 
-  /// Upload fortune saucer image
+  /// Upload fortune saucer image using XFile (cross-platform)
   Future<String> uploadSaucerImage({
     required String userId,
     required XFile imageFile,
@@ -51,15 +50,36 @@ class StorageService {
       final bytes = await imageFile.readAsBytes();
       await _client.storage
           .from(SupabaseConstants.fortuneImagesBucket)
-          .uploadBinary(path, bytes);
+          .uploadBinary(path, bytes, fileOptions: const FileOptions(
+            contentType: 'image/jpeg',
+          ));
 
       return path;
     } on StorageException catch (e) {
-      throw StorageException(
-        'Failed to upload saucer image: ${e.message}',
-        statusCode: e.statusCode,
-        error: e.error,
-      );
+      throw AppStorageException('Failed to upload saucer image: ${e.message}');
+    }
+  }
+
+  /// Upload image from bytes (useful for web)
+  Future<String> uploadImageBytes({
+    required String userId,
+    required Uint8List bytes,
+    required String readingId,
+    required String type, // 'cup' or 'saucer'
+  }) async {
+    final fileName = '${type}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final path = '$userId/$readingId/$fileName';
+
+    try {
+      await _client.storage
+          .from(SupabaseConstants.fortuneImagesBucket)
+          .uploadBinary(path, bytes, fileOptions: const FileOptions(
+            contentType: 'image/jpeg',
+          ));
+
+      return path;
+    } on StorageException catch (e) {
+      throw AppStorageException('Failed to upload $type image: ${e.message}');
     }
   }
 
@@ -72,11 +92,7 @@ class StorageService {
 
       return signedUrl;
     } on StorageException catch (e) {
-      throw StorageException(
-        'Failed to get signed URL: ${e.message}',
-        statusCode: e.statusCode,
-        error: e.error,
-      );
+      throw AppStorageException('Failed to get signed URL: ${e.message}');
     }
   }
 
@@ -87,11 +103,7 @@ class StorageService {
           .from(SupabaseConstants.fortuneImagesBucket)
           .remove([path]);
     } on StorageException catch (e) {
-      throw StorageException(
-        'Failed to delete image: ${e.message}',
-        statusCode: e.statusCode,
-        error: e.error,
-      );
+      throw AppStorageException('Failed to delete image: ${e.message}');
     }
   }
 
@@ -113,11 +125,7 @@ class StorageService {
             .remove(paths);
       }
     } on StorageException catch (e) {
-      throw StorageException(
-        'Failed to delete reading images: ${e.message}',
-        statusCode: e.statusCode,
-        error: e.error,
-      );
+      throw AppStorageException('Failed to delete reading images: ${e.message}');
     }
   }
 }

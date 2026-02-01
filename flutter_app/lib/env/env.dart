@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Environment configuration
 /// Use --dart-define to set values:
 /// flutter run --dart-define=SUPABASE_URL=xxx --dart-define=SUPABASE_ANON_KEY=xxx
@@ -26,9 +28,23 @@ class Env {
   static bool get isConfigured =>
       supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty;
 
-  static void validate() {
+  /// Validate configuration - logs warning instead of throwing
+  /// Returns true if configured, false otherwise
+  static bool validate() {
     if (!isConfigured) {
-      throw Exception(
+      debugPrint(
+        'WARNING: Supabase configuration missing. '
+        'Use --dart-define=SUPABASE_URL=xxx --dart-define=SUPABASE_ANON_KEY=xxx',
+      );
+      return false;
+    }
+    return true;
+  }
+
+  /// Throws if not configured - use only when configuration is required
+  static void requireConfiguration() {
+    if (!isConfigured) {
+      throw StateError(
         'Supabase configuration missing. '
         'Use --dart-define=SUPABASE_URL=xxx --dart-define=SUPABASE_ANON_KEY=xxx',
       );
