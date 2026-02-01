@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/supabase_constants.dart';
-import '../../core/errors/exceptions.dart';
 
 /// Supabase Storage service for file uploads
 class StorageService {
@@ -29,7 +28,11 @@ class StorageService {
 
       return path;
     } on StorageException catch (e) {
-      throw StorageException('Failed to upload cup image: ${e.message}');
+      throw StorageException(
+        'Failed to upload cup image: ${e.message}',
+        statusCode: e.statusCode,
+        error: e.error,
+      );
     }
   }
 
@@ -49,7 +52,11 @@ class StorageService {
 
       return path;
     } on StorageException catch (e) {
-      throw StorageException('Failed to upload saucer image: ${e.message}');
+      throw StorageException(
+        'Failed to upload saucer image: ${e.message}',
+        statusCode: e.statusCode,
+        error: e.error,
+      );
     }
   }
 
@@ -62,7 +69,11 @@ class StorageService {
 
       return signedUrl;
     } on StorageException catch (e) {
-      throw StorageException('Failed to get signed URL: ${e.message}');
+      throw StorageException(
+        'Failed to get signed URL: ${e.message}',
+        statusCode: e.statusCode,
+        error: e.error,
+      );
     }
   }
 
@@ -73,7 +84,11 @@ class StorageService {
           .from(SupabaseConstants.fortuneImagesBucket)
           .remove([path]);
     } on StorageException catch (e) {
-      throw StorageException('Failed to delete image: ${e.message}');
+      throw StorageException(
+        'Failed to delete image: ${e.message}',
+        statusCode: e.statusCode,
+        error: e.error,
+      );
     }
   }
 
@@ -95,7 +110,11 @@ class StorageService {
             .remove(paths);
       }
     } on StorageException catch (e) {
-      throw StorageException('Failed to delete reading images: ${e.message}');
+      throw StorageException(
+        'Failed to delete reading images: ${e.message}',
+        statusCode: e.statusCode,
+        error: e.error,
+      );
     }
   }
 }

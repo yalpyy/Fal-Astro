@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../providers/profile_provider.dart';
-import '../../providers/daily_astro_provider.dart';
 import '../../providers/astro_provider.dart';
 import '../../router/route_names.dart';
 import '../../widgets/common/disclaimer_banner.dart';

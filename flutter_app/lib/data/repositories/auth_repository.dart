@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
 
 /// Authentication repository
