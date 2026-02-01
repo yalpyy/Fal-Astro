@@ -1,6 +1,6 @@
 /**
  * Fortune Read Edge Function
- * Analyzes coffee cup images and generates fortune readings
+ * Analyzes coffee cup images and generates fortune readings deeneme
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
