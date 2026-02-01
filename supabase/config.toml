@@ -51,5 +51,14 @@ enabled = true
 client_id = ""
 secret = ""
 
-[functions]
+[functions.fortune_read]
+verify_jwt = true
+
+[functions.daily_astro]
+verify_jwt = true
+
+[functions.astro_report]
+verify_jwt = true
+
+[functions.compat_report]
 verify_jwt = true
