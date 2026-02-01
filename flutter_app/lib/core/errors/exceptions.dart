@@ -22,14 +22,14 @@ class NetworkException extends AppException {
 }
 
 /// Auth exception
-class AuthException extends AppException {
-  const AuthException([String message = 'Authentication error', String? code])
+class AppAuthException extends AppException {
+  const AppAuthException([String message = 'Authentication error', String? code])
       : super(message, code);
 }
 
 /// Storage exception
-class StorageException extends AppException {
-  const StorageException([String message = 'Storage error occurred'])
+class AppStorageException extends AppException {
+  const AppStorageException([String message = 'Storage error occurred'])
       : super(message);
 }
 
