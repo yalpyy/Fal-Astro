@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,8 +18,8 @@ class FortuneUploadScreen extends ConsumerStatefulWidget {
 }
 
 class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
-  File? _cupImage;
-  File? _saucerImage;
+  XFile? _cupImage;
+  XFile? _saucerImage;
   FortuneIntent _intent = FortuneIntent.general;
   final _noteController = TextEditingController();
 
@@ -31,7 +32,7 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
   Future<void> _pickImage(bool isCup) async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
-      source: ImageSource.camera,
+      source: kIsWeb ? ImageSource.gallery : ImageSource.camera,
       maxWidth: 1024,
       maxHeight: 1024,
       imageQuality: 80,
@@ -40,9 +41,9 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
     if (picked != null) {
       setState(() {
         if (isCup) {
-          _cupImage = File(picked.path);
+          _cupImage = picked;
         } else {
-          _saucerImage = File(picked.path);
+          _saucerImage = picked;
         }
       });
     }
@@ -251,7 +252,7 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
 }
 
 class _ImagePickerCard extends StatelessWidget {
-  final File? image;
+  final XFile? image;
   final IconData placeholder;
   final VoidCallback onTap;
   final VoidCallback onRemove;
@@ -270,14 +271,18 @@ class _ImagePickerCard extends StatelessWidget {
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: image != null
-            ? Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.file(image!, fit: BoxFit.cover),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: IconButton.filled(
+            ? FutureBuilder<Uint8List>(
+                future: image!.readAsBytes(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                    return Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.memory(snapshot.data!, fit: BoxFit.cover),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton.filled(
                       onPressed: onRemove,
                       icon: const Icon(Icons.close),
                     ),

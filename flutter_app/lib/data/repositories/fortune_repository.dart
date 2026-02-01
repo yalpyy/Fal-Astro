@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/supabase_constants.dart';
@@ -69,8 +69,8 @@ class FortuneRepository {
   /// Uploads images and calls edge function
   Future<FortuneReading> createFortuneReading({
     required FortuneIntent intent,
-    required File cupImage,
-    File? saucerImage,
+    required XFile cupImage,
+    XFile? saucerImage,
     String? customNote,
     String locale = 'tr',
   }) async {

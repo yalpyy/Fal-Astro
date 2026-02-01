@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/fortune_reading.dart';
 import '../../data/models/fortune_feedback.dart';
