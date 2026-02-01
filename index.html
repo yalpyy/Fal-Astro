@@ -34,7 +34,7 @@
 
   <script>
     // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = "1754245190";
+    const serviceWorkerVersion = "2841180767";
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
@@ -56,15 +56,37 @@
     });
   </script>
   <script>
+  // Catch JavaScript errors
   window.onerror = function(message, source, lineno, colno, error) {
+    console.error('🔴 JS Error:', message, 'at', source, lineno + ':' + colno);
+    if (error && error.stack) console.error(error.stack);
     document.body.innerHTML =
-      "<pre style='white-space:pre-wrap;padding:16px;font-family:monospace'>" +
-      "JS Error: " + message + "\n" +
-      "Source: " + source + "\n" +
-      "Line: " + lineno + ":" + colno + "\n" +
+      "<div style='padding:20px;font-family:system-ui,-apple-system,sans-serif;max-width:800px;margin:40px auto'>" +
+      "<h2 style='color:#d32f2f'>⚠️ Uygulama Hatası</h2>" +
+      "<pre style='background:#f5f5f5;padding:16px;border-radius:8px;overflow:auto;font-size:13px'>" +
+      "Hata: " + message + "\n" +
+      "Kaynak: " + source + "\n" +
+      "Satır: " + lineno + ":" + colno + "\n\n" +
       (error && error.stack ? error.stack : "") +
-      "</pre>";
+      "</pre>" +
+      "<p style='color:#666;font-size:14px'>Lütfen browser console'u (F12) kontrol edin.</p>" +
+      "</div>";
+    return true;
   };
+
+  // Catch unhandled promise rejections
+  window.addEventListener('unhandledrejection', function(event) {
+    console.error('🔴 Unhandled Promise Rejection:', event.reason);
+    document.body.innerHTML =
+      "<div style='padding:20px;font-family:system-ui,-apple-system,sans-serif;max-width:800px;margin:40px auto'>" +
+      "<h2 style='color:#d32f2f'>⚠️ Uygulama Hatası</h2>" +
+      "<pre style='background:#f5f5f5;padding:16px;border-radius:8px;overflow:auto;font-size:13px'>" +
+      "Promise Rejection: " + (event.reason || 'Unknown error') + "\n\n" +
+      (event.reason && event.reason.stack ? event.reason.stack : "") +
+      "</pre>" +
+      "<p style='color:#666;font-size:14px'>Lütfen browser console'u (F12) kontrol edin.</p>" +
+      "</div>";
+  });
 </script>
 </body>
 </html>
