@@ -6,6 +6,7 @@ on:
     paths:
       - "supabase/functions/**"
       - ".github/workflows/supabase-deploy.yml"
+      - "claude/fortune-astro-app-0"
 
 jobs:
   deploy:
