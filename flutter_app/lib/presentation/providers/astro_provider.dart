@@ -9,11 +9,11 @@ import 'auth_provider.dart';
 /// Astro repository provider - returns null if Supabase not configured
 final astroRepositoryProvider = Provider<AstroRepository?>((ref) {
   final client = ref.watch(safeSupabaseClientProvider);
-  if (client == null) return null;
-  return AstroRepository(
-    client,
-    ref.watch(functionsServiceProvider),
-  );
+  final functions = ref.watch(functionsServiceProvider);
+
+  if (client == null || functions == null) return null;
+
+  return AstroRepository(client, functions);
 });
 
 /// Daily astro state
