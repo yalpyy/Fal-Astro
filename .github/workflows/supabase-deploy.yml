@@ -1,0 +1,44 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "supabase/functions/**"
+      - ".github/workflows/supabase-deploy.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy functions
+        run: |
+          supabase functions deploy fortune_read
+          supabase functions deploy daily_astro
+          supabase functions deploy astro_report
+          supabase functions deploy compat_report
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Set function secrets
+        run: |
+          supabase secrets set LLM_PROVIDER=${{ secrets.LLM_PROVIDER }}
+          if [ "${{ secrets.LLM_PROVIDER }}" = "openai" ]; then
+            supabase secrets set OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          fi
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
