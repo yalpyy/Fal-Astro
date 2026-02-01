@@ -253,3 +253,4 @@ function extractPathFromUrl(signedUrl: string): string {
     return signedUrl;
   }
 }
+
