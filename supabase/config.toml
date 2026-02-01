@@ -50,7 +50,7 @@ enable_confirmations = false
 enabled = false
 
 [functions.fortune_read]
-verify_jwt = true
+verify_jwt = false
 
 [functions.daily_astro]
 verify_jwt = true
