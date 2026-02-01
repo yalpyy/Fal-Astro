@@ -55,5 +55,16 @@
       });
     });
   </script>
+  <script>
+  window.onerror = function(message, source, lineno, colno, error) {
+    document.body.innerHTML =
+      "<pre style='white-space:pre-wrap;padding:16px;font-family:monospace'>" +
+      "JS Error: " + message + "\n" +
+      "Source: " + source + "\n" +
+      "Line: " + lineno + ":" + colno + "\n" +
+      (error && error.stack ? error.stack : "") +
+      "</pre>";
+  };
+</script>
 </body>
 </html>
