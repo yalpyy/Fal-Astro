@@ -3,9 +3,8 @@ name: Deploy Supabase Edge Functions
 on:
   push:
     paths:
-      - "supabase/functions/**"
+      - "supabase/**"
       - ".github/workflows/supabase-deploy.yml"
-      - "claude/fortune-astro-app-0"
 
 jobs:
   deploy:
