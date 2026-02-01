@@ -1,0 +1,41 @@
+# Flutter analysis options
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Style
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_fields: true
+    prefer_final_in_for_each: true
+    prefer_final_locals: true
+
+    # Avoid
+    avoid_print: true
+    avoid_empty_else: true
+    avoid_returning_null_for_void: true
+    avoid_slow_async_io: true
+    avoid_type_to_string: true
+    avoid_unused_constructor_parameters: true
+
+    # Prefer
+    prefer_single_quotes: true
+    prefer_spread_collections: true
+    prefer_if_null_operators: true
+    prefer_null_aware_operators: true
+
+    # Other
+    always_declare_return_types: true
+    annotate_overrides: true
+    cancel_subscriptions: true
+    close_sinks: true
+    sort_pub_dependencies: true
+    use_super_parameters: true
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    invalid_annotation_target: ignore
