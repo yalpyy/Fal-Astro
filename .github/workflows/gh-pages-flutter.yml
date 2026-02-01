@@ -1,0 +1,40 @@
+name: Deploy Flutter Web to GitHub Pages
+
+on:
+  push:
+ 
+    paths:
+      - "flutter_app/**"
+      - ".github/workflows/gh-pages-flutter.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.22.0"
+          cache: true
+
+      - name: Pub get
+        working-directory: flutter_app
+        run: flutter pub get
+
+      - name: Build web
+        working-directory: flutter_app
+        run: |
+          flutter build web --release \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --base-href "/${{ github.event.repository.name }}/"
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: flutter_app/build/web
