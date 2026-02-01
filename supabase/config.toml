@@ -47,9 +47,7 @@ enable_signup = false
 enable_confirmations = false
 
 [auth.external.apple]
-enabled = true
-client_id = ""
-secret = ""
+enabled = false
 
 [functions.fortune_read]
 verify_jwt = true
