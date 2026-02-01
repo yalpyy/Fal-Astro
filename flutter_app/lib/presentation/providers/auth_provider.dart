@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -55,8 +56,12 @@ final safeSupabaseClientProvider = Provider<SupabaseClient?>((ref) {
     return null;
   }
   try {
-    return Supabase.instance.client;
+    // Check if Supabase was initialized
+    final instance = Supabase.instance;
+    return instance.client;
   } catch (e) {
+    // Supabase.initialize() was not called
+    debugPrint('Supabase not initialized: $e');
     return null;
   }
 });

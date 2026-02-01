@@ -6,10 +6,12 @@ import '../../data/services/functions_service.dart';
 import 'fortune_provider.dart';
 import 'auth_provider.dart';
 
-/// Astro repository provider
-final astroRepositoryProvider = Provider<AstroRepository>((ref) {
+/// Astro repository provider - returns null if Supabase not configured
+final astroRepositoryProvider = Provider<AstroRepository?>((ref) {
+  final client = ref.watch(safeSupabaseClientProvider);
+  if (client == null) return null;
   return AstroRepository(
-    ref.watch(supabaseClientProvider),
+    client,
     ref.watch(functionsServiceProvider),
   );
 });
@@ -41,7 +43,7 @@ class DailyAstroState {
 
 /// Daily astro notifier
 class DailyAstroNotifier extends StateNotifier<DailyAstroState> {
-  final AstroRepository _repository;
+  final AstroRepository? _repository;
 
   DailyAstroNotifier(this._repository) : super(const DailyAstroState());
 
@@ -49,6 +51,11 @@ class DailyAstroNotifier extends StateNotifier<DailyAstroState> {
     String locale = 'tr',
     bool forceRefresh = false,
   }) async {
+    if (_repository == null) {
+      state = const DailyAstroState(isLoading: false);
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -104,7 +111,7 @@ class AstroReportsState {
 
 /// Astro reports list notifier
 class AstroReportsNotifier extends StateNotifier<AstroReportsState> {
-  final AstroRepository _repository;
+  final AstroRepository? _repository;
   static const int _pageSize = 20;
 
   AstroReportsNotifier(this._repository) : super(const AstroReportsState());
@@ -113,6 +120,11 @@ class AstroReportsNotifier extends StateNotifier<AstroReportsState> {
     ReportType? type,
     bool refresh = false,
   }) async {
+    if (_repository == null) {
+      state = const AstroReportsState(isLoading: false);
+      return;
+    }
+
     if (state.isLoading) return;
 
     state = state.copyWith(isLoading: true, error: null);
@@ -190,7 +202,7 @@ class GenerateReportState {
 
 /// Generate report notifier
 class GenerateReportNotifier extends StateNotifier<GenerateReportState> {
-  final AstroRepository _repository;
+  final AstroRepository? _repository;
   final AstroReportsNotifier _reportsNotifier;
 
   GenerateReportNotifier(this._repository, this._reportsNotifier)
@@ -200,6 +212,11 @@ class GenerateReportNotifier extends StateNotifier<GenerateReportState> {
     required ReportType reportType,
     String locale = 'tr',
   }) async {
+    if (_repository == null) {
+      state = state.copyWith(error: 'Supabase not configured');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -233,11 +250,13 @@ final generateReportProvider =
 final astroReportProvider =
     FutureProvider.family<AstroReport?, String>((ref, id) async {
   final repository = ref.watch(astroRepositoryProvider);
+  if (repository == null) return null;
   return repository.getAstroReport(id);
 });
 
 /// Latest natal report provider
 final latestNatalReportProvider = FutureProvider<AstroReport?>((ref) async {
   final repository = ref.watch(astroRepositoryProvider);
+  if (repository == null) return null;
   return repository.getLatestValidReport(ReportType.natal);
 });

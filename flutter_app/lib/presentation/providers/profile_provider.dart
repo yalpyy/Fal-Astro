@@ -4,9 +4,11 @@ import '../../data/models/birth_profile.dart';
 import '../../data/repositories/profile_repository.dart';
 import 'auth_provider.dart';
 
-/// Profile repository provider
-final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
-  return ProfileRepository(ref.watch(supabaseClientProvider));
+/// Profile repository provider - returns null if Supabase not configured
+final profileRepositoryProvider = Provider<ProfileRepository?>((ref) {
+  final client = ref.watch(safeSupabaseClientProvider);
+  if (client == null) return null;
+  return ProfileRepository(client);
 });
 
 /// User profile state
@@ -44,11 +46,17 @@ class ProfileState {
 
 /// Profile notifier
 class ProfileNotifier extends StateNotifier<ProfileState> {
-  final ProfileRepository _repository;
+  final ProfileRepository? _repository;
 
   ProfileNotifier(this._repository) : super(const ProfileState());
 
   Future<void> loadProfile() async {
+    if (_repository == null) {
+      // Unconfigured - no profile to load
+      state = const ProfileState(isLoading: false);
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
     try {
       final profile = await _repository.getProfile();
@@ -68,6 +76,11 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     String? avatarUrl,
     String? locale,
   }) async {
+    if (_repository == null) {
+      state = state.copyWith(error: 'Supabase not configured');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
     try {
       final profile = await _repository.updateProfile(
@@ -91,6 +104,11 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     double? latitude,
     double? longitude,
   }) async {
+    if (_repository == null) {
+      state = state.copyWith(error: 'Supabase not configured');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
     try {
       final birthProfile = await _repository.saveBirthProfile(

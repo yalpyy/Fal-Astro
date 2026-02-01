@@ -9,14 +9,18 @@ import '../../data/services/functions_service.dart';
 import '../../data/services/local_cache_service.dart';
 import 'auth_provider.dart';
 
-/// Storage service provider
-final storageServiceProvider = Provider<StorageService>((ref) {
-  return StorageService(ref.watch(supabaseClientProvider));
+/// Storage service provider - returns null if Supabase not configured
+final storageServiceProvider = Provider<StorageService?>((ref) {
+  final client = ref.watch(safeSupabaseClientProvider);
+  if (client == null) return null;
+  return StorageService(client);
 });
 
-/// Functions service provider
-final functionsServiceProvider = Provider<FunctionsService>((ref) {
-  return FunctionsService(ref.watch(supabaseClientProvider));
+/// Functions service provider - returns null if Supabase not configured
+final functionsServiceProvider = Provider<FunctionsService?>((ref) {
+  final client = ref.watch(safeSupabaseClientProvider);
+  if (client == null) return null;
+  return FunctionsService(client);
 });
 
 /// Local cache service provider
@@ -25,13 +29,15 @@ final localCacheServiceProvider = FutureProvider<LocalCacheService>((ref) async 
   return LocalCacheService(prefs);
 });
 
-/// Fortune repository provider
-final fortuneRepositoryProvider = Provider<FortuneRepository>((ref) {
-  return FortuneRepository(
-    ref.watch(supabaseClientProvider),
-    ref.watch(storageServiceProvider),
-    ref.watch(functionsServiceProvider),
-  );
+/// Fortune repository provider - returns null if Supabase not configured
+final fortuneRepositoryProvider = Provider<FortuneRepository?>((ref) {
+  final client = ref.watch(safeSupabaseClientProvider);
+  final storage = ref.watch(storageServiceProvider);
+  final functions = ref.watch(functionsServiceProvider);
+
+  if (client == null || storage == null || functions == null) return null;
+
+  return FortuneRepository(client, storage, functions);
 });
 
 /// Fortune list state
@@ -65,12 +71,17 @@ class FortuneListState {
 
 /// Fortune list notifier
 class FortuneListNotifier extends StateNotifier<FortuneListState> {
-  final FortuneRepository _repository;
+  final FortuneRepository? _repository;
   static const int _pageSize = 20;
 
   FortuneListNotifier(this._repository) : super(const FortuneListState());
 
   Future<void> loadReadings({bool refresh = false}) async {
+    if (_repository == null) {
+      state = const FortuneListState(isLoading: false);
+      return;
+    }
+
     if (state.isLoading) return;
 
     state = state.copyWith(isLoading: true, error: null);
@@ -151,7 +162,7 @@ class CreateFortuneState {
 
 /// Create fortune notifier
 class CreateFortuneNotifier extends StateNotifier<CreateFortuneState> {
-  final FortuneRepository _repository;
+  final FortuneRepository? _repository;
   final FortuneListNotifier _listNotifier;
 
   CreateFortuneNotifier(this._repository, this._listNotifier)
@@ -165,6 +176,11 @@ class CreateFortuneNotifier extends StateNotifier<CreateFortuneState> {
     String? customNote,
     String locale = 'tr',
   }) async {
+    if (_repository == null) {
+      state = state.copyWith(error: 'Supabase not configured');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -201,6 +217,7 @@ final createFortuneProvider =
 final fortuneReadingProvider =
     FutureProvider.family<FortuneReading?, String>((ref, id) async {
   final repository = ref.watch(fortuneRepositoryProvider);
+  if (repository == null) return null;
   return repository.getFortuneReading(id);
 });
 
@@ -208,6 +225,7 @@ final fortuneReadingProvider =
 final fortuneFeedbackProvider =
     FutureProvider.family<FortuneFeedback?, String>((ref, readingId) async {
   final repository = ref.watch(fortuneRepositoryProvider);
+  if (repository == null) return null;
   return repository.getFeedback(readingId);
 });
 
@@ -215,5 +233,6 @@ final fortuneFeedbackProvider =
 final pendingFeedbackProvider =
     FutureProvider<List<FortuneReading>>((ref) async {
   final repository = ref.watch(fortuneRepositoryProvider);
+  if (repository == null) return [];
   return repository.getReadingsPendingFeedback();
 });

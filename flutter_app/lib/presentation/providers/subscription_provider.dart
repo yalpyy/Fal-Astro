@@ -3,9 +3,11 @@ import '../../data/models/subscription.dart';
 import '../../data/repositories/subscription_repository.dart';
 import 'auth_provider.dart';
 
-/// Subscription repository provider
-final subscriptionRepositoryProvider = Provider<SubscriptionRepository>((ref) {
-  return SubscriptionRepository(ref.watch(supabaseClientProvider));
+/// Subscription repository provider - returns null if Supabase not configured
+final subscriptionRepositoryProvider = Provider<SubscriptionRepository?>((ref) {
+  final client = ref.watch(safeSupabaseClientProvider);
+  if (client == null) return null;
+  return SubscriptionRepository(client);
 });
 
 /// Subscription state
@@ -39,11 +41,17 @@ class SubscriptionState {
 
 /// Subscription notifier
 class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
-  final SubscriptionRepository _repository;
+  final SubscriptionRepository? _repository;
 
   SubscriptionNotifier(this._repository) : super(const SubscriptionState());
 
   Future<void> loadSubscription() async {
+    if (_repository == null) {
+      // Unconfigured - no subscription to load
+      state = const SubscriptionState(isLoading: false);
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -55,6 +63,11 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   }
 
   Future<void> startTrial() async {
+    if (_repository == null) {
+      state = state.copyWith(error: 'Supabase not configured');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -70,6 +83,11 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     required String productId,
     required String receiptData,
   }) async {
+    if (_repository == null) {
+      state = state.copyWith(error: 'Supabase not configured');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -85,6 +103,11 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   }
 
   Future<void> restorePurchases() async {
+    if (_repository == null) {
+      state = state.copyWith(error: 'Supabase not configured');
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {

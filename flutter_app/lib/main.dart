@@ -41,8 +41,11 @@ void main() async {
   // Error handling for web debugging
   if (kIsWeb) {
     FlutterError.onError = (FlutterErrorDetails details) {
-      log('Flutter Error: ${details.exception}');
-      log('Stack trace: ${details.stack}');
+      // Log to browser console
+      // ignore: avoid_print
+      print('🔴 Flutter Error: ${details.exception}');
+      // ignore: avoid_print
+      print('Stack trace: ${details.stack}');
     };
 
     runZonedGuarded(
@@ -54,8 +57,11 @@ void main() async {
         );
       },
       (error, stackTrace) {
-        log('Uncaught error: $error');
-        log('Stack trace: $stackTrace');
+        // Log to browser console
+        // ignore: avoid_print
+        print('🔴 Uncaught error: $error');
+        // ignore: avoid_print
+        print('Stack trace: $stackTrace');
       },
     );
   } else {
