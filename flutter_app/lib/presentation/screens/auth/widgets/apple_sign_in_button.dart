@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -8,10 +8,19 @@ import '../../../providers/auth_provider.dart';
 class AppleSignInButton extends ConsumerWidget {
   const AppleSignInButton({super.key});
 
+  bool get _isApplePlatform {
+    // Web'de Platform yok, önce web'i ele
+    if (kIsWeb) return false;
+
+    // iOS/macOS kontrolü (dart:io kullanmadan)
+    return defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Only show on Apple platforms
-    if (!Platform.isIOS && !Platform.isMacOS) {
+    if (!_isApplePlatform) {
       return const SizedBox.shrink();
     }
 
@@ -31,11 +40,18 @@ class AppleSignInButton extends ConsumerWidget {
         ],
       );
 
-      if (credential.identityToken != null) {
+      final token = credential.identityToken;
+      if (token != null && token.isNotEmpty) {
         await ref.read(authProvider.notifier).signInWithAppleNative(
-              credential.identityToken!,
-              '', // Nonce (would be generated for production)
+              token,
+              '', // Nonce (prod için üretilecek)
             );
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Apple token alınamadı.')),
+          );
+        }
       }
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code != AuthorizationErrorCode.canceled) {
