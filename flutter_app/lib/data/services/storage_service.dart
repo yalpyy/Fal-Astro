@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/constants/supabase_constants.dart';
@@ -14,7 +15,7 @@ class StorageService {
   /// Returns the storage path
   Future<String> uploadCupImage({
     required String userId,
-    required File imageFile,
+    required XFile imageFile,
     String? readingId,
   }) async {
     final id = readingId ?? _uuid.v4();
@@ -22,9 +23,10 @@ class StorageService {
     final path = '$userId/$id/$fileName';
 
     try {
+      final bytes = await imageFile.readAsBytes();
       await _client.storage
           .from(SupabaseConstants.fortuneImagesBucket)
-          .upload(path, imageFile);
+          .uploadBinary(path, bytes);
 
       return path;
     } on StorageException catch (e) {
@@ -39,16 +41,17 @@ class StorageService {
   /// Upload fortune saucer image
   Future<String> uploadSaucerImage({
     required String userId,
-    required File imageFile,
+    required XFile imageFile,
     required String readingId,
   }) async {
     final fileName = 'saucer_${DateTime.now().millisecondsSinceEpoch}.jpg';
     final path = '$userId/$readingId/$fileName';
 
     try {
+      final bytes = await imageFile.readAsBytes();
       await _client.storage
           .from(SupabaseConstants.fortuneImagesBucket)
-          .upload(path, imageFile);
+          .uploadBinary(path, bytes);
 
       return path;
     } on StorageException catch (e) {

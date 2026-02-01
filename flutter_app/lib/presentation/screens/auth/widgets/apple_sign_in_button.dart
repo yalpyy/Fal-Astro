@@ -3,24 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../core/platform/platform_utils.dart';
 
 /// Apple Sign In button
 class AppleSignInButton extends ConsumerWidget {
   const AppleSignInButton({super.key});
 
-  bool get _isApplePlatform {
-    // Web'de Platform yok, önce web'i ele
-    if (kIsWeb) return false;
-
-    // iOS/macOS kontrolü (dart:io kullanmadan)
-    return defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Only show on Apple platforms
-    if (!_isApplePlatform) {
+    if (!PlatformUtils.isApplePlatform) {
       return const SizedBox.shrink();
     }
 
