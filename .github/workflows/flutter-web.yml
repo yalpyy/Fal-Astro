@@ -1,14 +1,17 @@
-name: Build Flutter Web
+name: Deploy Flutter Web to GitHub Pages
 
 on:
   push:
-    branches: [ "*" ]
+    branches: [ "main", "master" ]
     paths:
       - "flutter_app/**"
       - ".github/workflows/flutter-web.yml"
 
+permissions:
+  contents: write
+
 jobs:
-  build-web:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,15 +25,17 @@ jobs:
         working-directory: flutter_app
         run: flutter pub get
 
-      - name: Build web
+      - name: Build web (GitHub Pages)
         working-directory: flutter_app
         run: |
           flutter build web --release \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --base-href "/Fal-Astro/"
+          touch build/web/.nojekyll
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: web-build
-          path: flutter_app/build/web
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: flutter_app/build/web
