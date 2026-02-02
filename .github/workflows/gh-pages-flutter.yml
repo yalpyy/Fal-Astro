@@ -28,14 +28,24 @@ jobs:
 
       - name: Build web
         working-directory: flutter_app
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          # Secrets boş mu? (değeri yazdırmadan kontrol)
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "ERROR: Supabase secrets are empty. Add SUPABASE_URL and SUPABASE_ANON_KEY in GitHub Secrets."
+            exit 1
+          fi
+
           flutter build web --release \
             --pwa-strategy=none \
-            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --web-renderer html \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
             --base-href "/Fal-Astro/"
 
-          # Base href'i kesinleştir (bazı durumlarda şaşabiliyors)
+          # Base href'i kesinleştir (bazı durumlarda şaşabiliyor)
           sed -i 's|<base href="/"\s*/>|<base href="/Fal-Astro/"/>|g' build/web/index.html
           sed -i 's|<base href="/">|<base href="/Fal-Astro/">|g' build/web/index.html
 
@@ -47,5 +57,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: flutter_app/build/web
-
-
