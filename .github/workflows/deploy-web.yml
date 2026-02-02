@@ -1,0 +1,81 @@
+name: Deploy Flutter Web
+
+on:
+  push:
+    branches: [main, master, "claude/*"]
+    paths:
+      - "flutter_app/**"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:  # Manuel tetikleme
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.22.0"
+          cache: true
+
+      - name: Install dependencies
+        working-directory: flutter_app
+        run: flutter pub get
+
+      - name: Build web
+        working-directory: flutter_app
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          # Debug: Check if secrets are set
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "WARNING: SUPABASE_URL secret is not set!"
+          else
+            echo "SUPABASE_URL is configured"
+          fi
+
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "WARNING: SUPABASE_ANON_KEY secret is not set!"
+          else
+            echo "SUPABASE_ANON_KEY is configured"
+          fi
+
+          flutter build web --release \
+            --web-renderer html \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            --base-href "/Fal-Astro/"
+
+          touch build/web/.nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: flutter_app/build/web
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
