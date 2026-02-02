@@ -4,6 +4,7 @@ import 'package:video_player/video_player.dart'; // 1. EKLENDİ
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/loading_overlay.dart';
 import 'widgets/apple_sign_in_button.dart';
+import 'widgets/google_sign_in_button.dart';
 import 'widgets/email_sign_in_form.dart';
 
 /// Authentication screen
@@ -152,8 +153,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         const SizedBox(height: 24),
                       ],
 
-                      // Apple Sign In
+                      // Apple Sign In (iOS only)
                       const AppleSignInButton(),
+                      const SizedBox(height: 12),
+
+                      // Google Sign In
+                      const GoogleSignInButton(),
                       const SizedBox(height: 16),
 
                       // Divider

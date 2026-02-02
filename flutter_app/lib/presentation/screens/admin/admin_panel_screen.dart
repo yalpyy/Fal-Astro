@@ -251,7 +251,7 @@ class AdminPanelScreen extends ConsumerWidget {
               title: 'Bildirim Gonder',
               subtitle: 'Tum kullanicilara bildirim gonder',
               icon: Icons.notifications,
-              onTap: () => _showNotificationDialog(context),
+              onTap: () => _showNotificationDialog(context, ref),
             ),
             const SizedBox(height: 8),
             _ActionCard(
@@ -373,53 +373,130 @@ class AdminPanelScreen extends ConsumerWidget {
     );
   }
 
-  void _showNotificationDialog(BuildContext context) {
+  void _showNotificationDialog(BuildContext context, WidgetRef ref) {
     final titleController = TextEditingController();
     final bodyController = TextEditingController();
+    String selectedTopic = 'all_users';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Bildirim Gonder'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Baslik',
-                hintText: 'Bildirim basligi',
-              ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Bildirim Gonder'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Baslik',
+                    hintText: 'Bildirim basligi',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: bodyController,
+                  decoration: const InputDecoration(
+                    labelText: 'Icerik',
+                    hintText: 'Bildirim icerigi',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedTopic,
+                  decoration: const InputDecoration(
+                    labelText: 'Hedef Kitle',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'all_users', child: Text('Tum Kullanicilar')),
+                    DropdownMenuItem(value: 'promotions', child: Text('Promosyon Aboneleri')),
+                    DropdownMenuItem(value: 'horoscope_aries', child: Text('Koc Burcu')),
+                    DropdownMenuItem(value: 'horoscope_taurus', child: Text('Boga Burcu')),
+                    DropdownMenuItem(value: 'horoscope_gemini', child: Text('Ikizler Burcu')),
+                    DropdownMenuItem(value: 'horoscope_cancer', child: Text('Yengec Burcu')),
+                    DropdownMenuItem(value: 'horoscope_leo', child: Text('Aslan Burcu')),
+                    DropdownMenuItem(value: 'horoscope_virgo', child: Text('Basak Burcu')),
+                    DropdownMenuItem(value: 'horoscope_libra', child: Text('Terazi Burcu')),
+                    DropdownMenuItem(value: 'horoscope_scorpio', child: Text('Akrep Burcu')),
+                    DropdownMenuItem(value: 'horoscope_sagittarius', child: Text('Yay Burcu')),
+                    DropdownMenuItem(value: 'horoscope_capricorn', child: Text('Oglak Burcu')),
+                    DropdownMenuItem(value: 'horoscope_aquarius', child: Text('Kova Burcu')),
+                    DropdownMenuItem(value: 'horoscope_pisces', child: Text('Balik Burcu')),
+                  ],
+                  onChanged: (value) {
+                    setState(() => selectedTopic = value ?? 'all_users');
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: bodyController,
-              decoration: const InputDecoration(
-                labelText: 'Icerik',
-                hintText: 'Bildirim icerigi',
-              ),
-              maxLines: 3,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Iptal'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                if (titleController.text.isEmpty || bodyController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Baslik ve icerik gerekli')),
+                  );
+                  return;
+                }
+
+                Navigator.pop(context);
+
+                // Show loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Bildirim gonderiliyor...')),
+                );
+
+                try {
+                  final supabase = ref.read(safeSupabaseClientProvider);
+                  if (supabase == null) throw Exception('Supabase baglantisi yok');
+
+                  final response = await supabase.functions.invoke(
+                    'send-notification',
+                    body: {
+                      'title': titleController.text,
+                      'body': bodyController.text,
+                      'topic': selectedTopic,
+                    },
+                  );
+
+                  if (response.status != 200) {
+                    throw Exception(response.data?['error'] ?? 'Bildirim gonderilemedi');
+                  }
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Bildirim gonderildi: ${response.data?['message'] ?? 'Basarili'}'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Hata: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Gonder'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Iptal'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Bildirim gonderildi (simule)'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: const Text('Gonder'),
-          ),
-        ],
       ),
     );
   }

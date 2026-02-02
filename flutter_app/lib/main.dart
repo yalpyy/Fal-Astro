@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,9 +10,20 @@ import 'app.dart';
 import 'env/env.dart';
 import 'data/services/notification_service.dart';
 import 'core/services/ad_service.dart';
+import 'core/services/push_notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase (only on mobile)
+  if (!kIsWeb) {
+    try {
+      await Firebase.initializeApp();
+      debugPrint('Firebase initialized');
+    } catch (e) {
+      debugPrint('Firebase initialization failed: $e');
+    }
+  }
 
   // Validate environment - returns false if not configured
   final isConfigured = Env.validate();
@@ -23,9 +35,14 @@ void main() async {
       anonKey: Env.supabaseAnonKey,
     );
 
-    // Initialize notifications (only on mobile)
+    // Initialize local notifications (only on mobile)
     if (!kIsWeb) {
       await NotificationService().initialize();
+    }
+
+    // Initialize push notifications with Firebase (only on mobile)
+    if (!kIsWeb) {
+      await PushNotificationService.instance.initialize();
     }
 
     // Initialize Google Mobile Ads (only on mobile)

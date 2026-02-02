@@ -59,8 +59,14 @@ dependencies:
   # Google Ads
   google_mobile_ads: ^4.0.0
 
+  # Firebase
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+
   # Sign In
   sign_in_with_apple: ^5.0.0
+  google_sign_in: ^6.2.1
+  crypto: ^3.0.3
 
   # In-App Purchase (stub)
   in_app_purchase: ^3.1.13
