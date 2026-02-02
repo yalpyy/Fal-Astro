@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/formatters.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/astro_provider.dart';
 import '../../router/route_names.dart';
@@ -21,9 +23,17 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
     final profileState = ref.watch(profileProvider);
     final dailyAstroState = ref.watch(dailyAstroProvider);
     final colorScheme = Theme.of(context).colorScheme;
+
+    // Debug banner for web
+    if (kDebugMode || kIsWeb) {
+      debugPrint('Auth Status: ${authState.status}');
+      debugPrint('User ID: ${authState.user?.id}');
+      debugPrint('User Email: ${authState.user?.email}');
+    }
 
     final zodiacSign = profileState.birthProfile?.zodiacSign;
     final zodiacLabel = zodiacSign != null
@@ -43,6 +53,46 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Debug: Auth status banner (only on web)
+                if (kIsWeb)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: authState.isAuthenticated
+                          ? Colors.green.shade100
+                          : Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          authState.isAuthenticated
+                              ? Icons.check_circle
+                              : Icons.error,
+                          color: authState.isAuthenticated
+                              ? Colors.green
+                              : Colors.red,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            authState.isAuthenticated
+                                ? 'Giriş yapıldı: ${authState.user?.email ?? "?"}'
+                                : 'Giriş yapılmadı! Status: ${authState.status.name}',
+                            style: TextStyle(
+                              color: authState.isAuthenticated
+                                  ? Colors.green.shade800
+                                  : Colors.red.shade800,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // Header
                 Row(
                   children: [
