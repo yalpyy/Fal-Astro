@@ -44,6 +44,23 @@ Kahve falı, rüya yorumu ve kişiye özel astroloji uygulaması. Flutter + Supa
 | Kredi Paketleri | ✅ Tamamlandı | TRY/USD fiyatlı paketler |
 | In-App Purchase | ⚠️ Stub | IAP entegrasyonu yapılacak |
 
+### Kimlik Doğrulama
+
+| Özellik | Durum | Açıklama |
+|---------|-------|----------|
+| E-posta Giriş | ✅ Tamamlandı | E-posta/şifre ile kayıt ve giriş |
+| Google Sign In | ✅ Tamamlandı | Google OAuth ile hızlı giriş (Android/iOS) |
+| Apple Sign In | ✅ Tamamlandı | Apple ID ile giriş (iOS için zorunlu) |
+
+### Bildirimler
+
+| Özellik | Durum | Açıklama |
+|---------|-------|----------|
+| Push Notifications | ✅ Tamamlandı | Firebase Cloud Messaging (FCM) |
+| Admin Bildirim Gönderimi | ✅ Tamamlandı | Admin panelden toplu bildirim |
+| Topic Aboneliği | ✅ Tamamlandı | Konuya göre bildirim (burç, promosyon vb.) |
+| Yerel Bildirimler | ✅ Tamamlandı | Günlük hatırlatmalar |
+
 ### Yasal Uyumluluk
 
 | Özellik | Durum | Açıklama |
@@ -63,6 +80,7 @@ Kahve falı, rüya yorumu ve kişiye özel astroloji uygulaması. Flutter + Supa
 | synastry-calculate | ✅ Tamamlandı | Burç uyumu hesaplama |
 | daily_astro | ✅ Tamamlandı | Günlük astroloji |
 | astro_report | ✅ Tamamlandı | Astroloji raporları |
+| send-notification | ✅ Tamamlandı | FCM push bildirim gönderimi |
 
 ### Admin & Yönetim
 
@@ -71,6 +89,7 @@ Kahve falı, rüya yorumu ve kişiye özel astroloji uygulaması. Flutter + Supa
 | Admin Panel | ✅ Tamamlandı | İstatistikler, kullanıcı yönetimi |
 | Günlük Burç Tetikleme | ✅ Tamamlandı | Manuel cron tetikleme |
 | Kullanıcı İstatistikleri | ✅ Tamamlandı | Toplam kullanıcı, aktif, fal sayısı |
+| Toplu Bildirim Gönderimi | ✅ Tamamlandı | Admin'den tüm kullanıcılara FCM bildirimi |
 
 ---
 
@@ -78,10 +97,9 @@ Kahve falı, rüya yorumu ve kişiye özel astroloji uygulaması. Flutter + Supa
 
 ### Yüksek Öncelik
 - [ ] **In-App Purchase Entegrasyonu** - Gerçek ödeme sistemi
-- [ ] **Push Notifications** - Firebase/OneSignal entegrasyonu
-- [ ] **Apple Sign In** - iOS için zorunlu
-- [ ] **Google Sign In** - Android için
 - [ ] **Production Ad Unit IDs** - Gerçek reklam ID'leri
+- [ ] **Firebase Yapılandırması** - `google-services.json` ve `GoogleService-Info.plist`
+- [ ] **Google OAuth Client IDs** - Google Cloud Console'da üretim ID'leri
 
 ### Orta Öncelik
 - [ ] **Offline Mode** - Hive ile local cache
@@ -111,12 +129,17 @@ Kahve falı, rüya yorumu ve kişiye özel astroloji uygulaması. Flutter + Supa
 - google_mobile_ads (Reklamlar)
 - speech_to_text (Sesli giriş)
 - share_plus (Paylaşım)
+- google_sign_in (Google OAuth)
+- sign_in_with_apple (Apple OAuth)
+- firebase_core & firebase_messaging (Push Notifications)
+- video_player (Login arkaplan videosu)
 
 **Backend:**
 - Supabase (Auth, Database, Storage, Edge Functions)
 - Deno/TypeScript (Edge Functions)
 - PostgreSQL (Database)
 - OpenAI/Anthropic (LLM)
+- Firebase Cloud Messaging (Push Notifications)
 
 ### Proje Yapısı
 
@@ -126,7 +149,9 @@ Fal-Astro/
 │   └── lib/
 │       ├── core/
 │       │   └── services/
-│       │       └── ad_service.dart         # Google Ads servisi
+│       │       ├── ad_service.dart              # Google Ads servisi
+│       │       ├── push_notification_service.dart # FCM servisi
+│       │       └── social_auth_service.dart     # Google/Apple OAuth
 │       ├── data/
 │       │   ├── models/
 │       │   │   └── user_profile.dart       # V2 gamification alanları
@@ -142,12 +167,16 @@ Fal-Astro/
 │       │   ├── screens/
 │       │   │   ├── home/
 │       │   │   ├── fortune/
-│       │   │   ├── dreams/                 # Rüya yorumu
+│       │   │   ├── dreams/                 # Rüya yorumu (sesli giriş)
 │       │   │   ├── astro/
-│       │   │   ├── synastry/              # Burç uyumu
+│       │   │   ├── synastry/               # Burç uyumu
 │       │   │   ├── shop/                   # Kredi mağazası
 │       │   │   ├── achievements/           # Başarımlar
-│       │   │   ├── admin/                  # Admin paneli
+│       │   │   ├── admin/                  # Admin paneli (bildirim gönderimi)
+│       │   │   ├── auth/                   # Giriş ekranı (Google/Apple)
+│       │   │   │   └── widgets/
+│       │   │   │       ├── google_sign_in_button.dart
+│       │   │   │       └── apple_sign_in_button.dart
 │       │   │   └── profile/
 │       │   └── widgets/
 │       │       ├── loading/
@@ -164,14 +193,16 @@ Fal-Astro/
 │   ├── migrations/
 │   │   ├── 20240101000000_initial_schema.sql
 │   │   ├── 20240202000000_upgrade_v2_ultimate.sql
-│   │   └── 20240202100000_add_credits_rpc.sql
+│   │   ├── 20240202100000_add_credits_rpc.sql
+│   │   └── 20240202200000_notification_logs.sql
 │   └── functions/
 │       ├── _shared/
 │       ├── fortune_read/
 │       ├── dream-interpret/
 │       ├── cron-daily-generator/
 │       ├── daily_astro/
-│       └── astro_report/
+│       ├── astro_report/
+│       └── send-notification/              # FCM bildirim gönderimi
 │
 ├── .github/
 │   └── workflows/
@@ -216,6 +247,7 @@ Edge Functions için Supabase Secrets:
 ```bash
 supabase secrets set OPENAI_API_KEY=sk-xxx
 supabase secrets set LLM_PROVIDER=openai
+supabase secrets set FIREBASE_SERVER_KEY=your-firebase-server-key
 ```
 
 ### 4. Google Ads Kurulumu
@@ -226,13 +258,94 @@ supabase secrets set LLM_PROVIDER=openai
 4. Android: `AndroidManifest.xml`'e AdMob App ID ekleyin
 5. iOS: `Info.plist`'e GADApplicationIdentifier ekleyin
 
+### 5. Firebase Kurulumu (Push Notifications)
+
+1. [Firebase Console](https://console.firebase.google.com/)'da proje oluşturun
+2. Android uygulaması ekleyin:
+   - Package name: `com.example.fal_astro`
+   - `google-services.json` dosyasını `android/app/` klasörüne kopyalayın
+3. iOS uygulaması ekleyin:
+   - Bundle ID: `com.example.falAstro`
+   - `GoogleService-Info.plist` dosyasını Xcode'da Runner'a ekleyin
+4. Cloud Messaging'i etkinleştirin
+5. Server Key'i Supabase Edge Function secrets'a ekleyin:
+   ```bash
+   supabase secrets set FIREBASE_SERVER_KEY=your-server-key
+   ```
+
+### 6. Google Sign In Kurulumu
+
+1. [Google Cloud Console](https://console.cloud.google.com/)'da proje oluşturun
+2. OAuth 2.0 Client ID'leri oluşturun:
+   - **Web Client**: Supabase OAuth için
+   - **iOS Client**: iOS uygulaması için
+   - **Android Client**: SHA-1 fingerprint ile
+3. `social_auth_service.dart` dosyasında Client ID'leri güncelleyin:
+   ```dart
+   static const String _webClientId = 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com';
+   static const String _iosClientId = 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com';
+   ```
+4. Supabase Dashboard'da Google Provider'ı etkinleştirin:
+   - Authentication > Providers > Google
+   - Web Client ID ve Secret'ı ekleyin
+
+### 7. Apple Sign In Kurulumu (iOS)
+
+1. [Apple Developer Portal](https://developer.apple.com/)'da:
+   - App ID oluşturun (Sign In with Apple capability)
+   - Services ID oluşturun (Supabase callback URL ile)
+   - Key oluşturun (Sign In with Apple)
+2. Xcode'da:
+   - Signing & Capabilities > Sign In with Apple ekleyin
+3. Supabase Dashboard'da Apple Provider'ı etkinleştirin:
+   - Authentication > Providers > Apple
+   - Service ID, Team ID, Key ID ve Private Key ekleyin
+
+### 8. Info.plist Gereksinimleri (iOS)
+
+```xml
+<!-- Google Sign In -->
+<key>CFBundleURLTypes</key>
+<array>
+    <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>com.googleusercontent.apps.YOUR_IOS_CLIENT_ID</string>
+        </array>
+    </dict>
+</array>
+
+<!-- Firebase -->
+<key>FirebaseAppDelegateProxyEnabled</key>
+<false/>
+
+<!-- Push Notifications -->
+<key>UIBackgroundModes</key>
+<array>
+    <string>fetch</string>
+    <string>remote-notification</string>
+</array>
+```
+
+### 9. AndroidManifest.xml Gereksinimleri
+
+```xml
+<!-- Internet permission (zaten var) -->
+<uses-permission android:name="android.permission.INTERNET"/>
+
+<!-- Google Ads -->
+<meta-data
+    android:name="com.google.android.gms.ads.APPLICATION_ID"
+    android:value="ca-app-pub-YOUR_APP_ID"/>
+```
+
 ---
 
 ## Veritabanı Şeması
 
 ### Ana Tablolar
 
-- `profiles` - Kullanıcı profilleri (V2: credits, streak, level, xp)
+- `profiles` - Kullanıcı profilleri (V2: credits, streak, level, xp, fcm_token, is_admin)
 - `fortune_readings` - Kahve falı kayıtları
 - `dream_interpretations` - Rüya yorumları
 - `daily_horoscopes` - Günlük burç yorumları
@@ -241,11 +354,13 @@ supabase secrets set LLM_PROVIDER=openai
 - `achievements` - Başarım tanımları
 - `user_achievements` - Kullanıcı başarımları
 - `consent_audit_log` - GDPR/KVKK onay kayıtları
+- `notification_logs` - Gönderilen bildirim kayıtları
 
 ### RPC Fonksiyonları
 
 - `add_user_credits(amount, type, desc)` - Kredi ekleme
 - `check_daily_ad_limit()` - Günlük reklam limiti kontrolü
+- `update_fcm_token(token)` - FCM token güncelleme
 
 ---
 
@@ -261,6 +376,7 @@ supabase secrets set LLM_PROVIDER=openai
 | `/astro_report` | POST | Astroloji raporu |
 | `/cron-daily-generator` | POST | Günlük burç üretimi |
 | `/synastry-calculate` | POST | Burç uyumu hesaplama |
+| `/send-notification` | POST | FCM push bildirim gönderimi |
 
 ---
 
