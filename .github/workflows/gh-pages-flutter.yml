@@ -2,12 +2,17 @@ name: Deploy Flutter Web to GitHub Pages
 
 on:
   push:
+    branches: [ "main", "master" ]
     paths:
       - "flutter_app/**"
       - ".github/workflows/gh-pages-flutter.yml"
 
 permissions:
   contents: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -26,18 +31,25 @@ jobs:
         working-directory: flutter_app
         run: flutter pub get
 
+      - name: Verify secrets are present
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          echo "SUPABASE_URL set? $([ -n "$SUPABASE_URL" ] && echo yes || echo no)"
+          echo "SUPABASE_ANON_KEY set? $([ -n "$SUPABASE_ANON_KEY" ] && echo yes || echo no)"
+
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "ERROR: Missing SUPABASE_URL or SUPABASE_ANON_KEY in GitHub Secrets."
+            exit 1
+          fi
+
       - name: Build web
         working-directory: flutter_app
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          # Secrets boş mu? (değeri yazdırmadan kontrol)
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "ERROR: Supabase secrets are empty. Add SUPABASE_URL and SUPABASE_ANON_KEY in GitHub Secrets."
-            exit 1
-          fi
-
           flutter build web --release \
             --pwa-strategy=none \
             --web-renderer html \
@@ -45,7 +57,7 @@ jobs:
             --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY \
             --base-href "/Fal-Astro/"
 
-          # Base href'i kesinleştir (bazı durumlarda şaşabiliyor)
+          # Base href'i kesinleştir
           sed -i 's|<base href="/"\s*/>|<base href="/Fal-Astro/"/>|g' build/web/index.html
           sed -i 's|<base href="/">|<base href="/Fal-Astro/">|g' build/web/index.html
 
