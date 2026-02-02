@@ -94,27 +94,44 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const HomeScreen(),
           ),
 
-          // History
+          // Fortune (Fal) - Tab 2
           GoRoute(
-            path: RoutePaths.history,
-            name: RouteNames.history,
-            builder: (context, state) => const HistoryScreen(),
+            path: RoutePaths.fortuneUpload,
+            name: RouteNames.fortuneUpload,
+            builder: (context, state) => const FortuneUploadScreen(),
           ),
 
-          // Profile
+          // Dreams (Rüya) - Tab 3
+          GoRoute(
+            path: RoutePaths.dreams,
+            name: RouteNames.dreams,
+            builder: (context, state) => const DreamsScreen(),
+          ),
+
+          // Astro - Tab 4
+          GoRoute(
+            path: RoutePaths.astroReport,
+            name: RouteNames.astroReport,
+            builder: (context, state) {
+              final typeParam = state.uri.queryParameters['type'];
+              return AstroReportScreen(initialType: typeParam);
+            },
+          ),
+
+          // Profile - Tab 5
           GoRoute(
             path: RoutePaths.profile,
             name: RouteNames.profile,
             builder: (context, state) => const ProfileScreen(),
           ),
-        ],
-      ),
 
-      // Fortune Upload
-      GoRoute(
-        path: RoutePaths.fortuneUpload,
-        name: RouteNames.fortuneUpload,
-        builder: (context, state) => const FortuneUploadScreen(),
+          // History (accessible from profile or home)
+          GoRoute(
+            path: RoutePaths.history,
+            name: RouteNames.history,
+            builder: (context, state) => const HistoryScreen(),
+          ),
+        ],
       ),
 
       // Fortune Result
@@ -137,16 +154,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // Astro Report
-      GoRoute(
-        path: RoutePaths.astroReport,
-        name: RouteNames.astroReport,
-        builder: (context, state) {
-          final typeParam = state.uri.queryParameters['type'];
-          return AstroReportScreen(initialType: typeParam);
-        },
-      ),
-
       // Astro Report Detail
       GoRoute(
         path: '/astro/report/:id',
@@ -157,14 +164,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // V2 Features
-      // Dreams
-      GoRoute(
-        path: RoutePaths.dreams,
-        name: RouteNames.dreams,
-        builder: (context, state) => const DreamsScreen(),
-      ),
-
+      // V2 Features (outside shell - full screen)
       // Shop
       GoRoute(
         path: RoutePaths.shop,
@@ -202,7 +202,7 @@ class MainShell extends StatelessWidget {
   }
 }
 
-/// Bottom navigation bar
+/// Bottom navigation bar with 5 tabs
 class MainBottomNav extends ConsumerWidget {
   const MainBottomNav({super.key});
 
@@ -211,10 +211,14 @@ class MainBottomNav extends ConsumerWidget {
     final currentPath = GoRouterState.of(context).uri.path;
 
     int currentIndex = 0;
-    if (currentPath.startsWith('/history')) {
+    if (currentPath.startsWith('/fortune')) {
       currentIndex = 1;
-    } else if (currentPath.startsWith('/profile')) {
+    } else if (currentPath.startsWith('/dreams')) {
       currentIndex = 2;
+    } else if (currentPath.startsWith('/astro')) {
+      currentIndex = 3;
+    } else if (currentPath.startsWith('/profile')) {
+      currentIndex = 4;
     }
 
     return NavigationBar(
@@ -225,9 +229,15 @@ class MainBottomNav extends ConsumerWidget {
             context.goNamed(RouteNames.home);
             break;
           case 1:
-            context.goNamed(RouteNames.history);
+            context.goNamed(RouteNames.fortuneUpload);
             break;
           case 2:
+            context.goNamed(RouteNames.dreams);
+            break;
+          case 3:
+            context.goNamed(RouteNames.astroReport);
+            break;
+          case 4:
             context.goNamed(RouteNames.profile);
             break;
         }
@@ -239,9 +249,19 @@ class MainBottomNav extends ConsumerWidget {
           label: 'Ana Sayfa',
         ),
         NavigationDestination(
-          icon: Icon(Icons.history_outlined),
-          selectedIcon: Icon(Icons.history),
-          label: 'Geçmiş',
+          icon: Icon(Icons.coffee_outlined),
+          selectedIcon: Icon(Icons.coffee),
+          label: 'Fal',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.nights_stay_outlined),
+          selectedIcon: Icon(Icons.nights_stay),
+          label: 'Rüya',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.auto_awesome_outlined),
+          selectedIcon: Icon(Icons.auto_awesome),
+          label: 'Astro',
         ),
         NavigationDestination(
           icon: Icon(Icons.person_outline),

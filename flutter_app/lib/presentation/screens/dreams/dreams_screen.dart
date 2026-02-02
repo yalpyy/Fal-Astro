@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/loading/mystic_loading_overlay.dart';
 
 /// Dream interpretation screen
 class DreamsScreen extends ConsumerStatefulWidget {
@@ -13,7 +14,6 @@ class DreamsScreen extends ConsumerStatefulWidget {
 class _DreamsScreenState extends ConsumerState<DreamsScreen> {
   final _dreamController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
   Map<String, dynamic>? _interpretation;
   String? _error;
 
@@ -27,38 +27,47 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
-      _isLoading = true;
       _error = null;
       _interpretation = null;
     });
 
-    try {
-      final supabase = ref.read(safeSupabaseClientProvider);
-      if (supabase == null) {
-        throw Exception('Supabase bağlantısı yok');
-      }
-      final response = await supabase.functions.invoke(
-        'dream-interpret',
-        body: {
-          'dream_text': _dreamController.text.trim(),
-          'locale': 'tr',
-        },
-      );
+    Map<String, dynamic>? result;
+    String? errorMessage;
 
-      if (response.status != 200) {
-        throw Exception(response.data?['message'] ?? 'Bir hata oluştu');
-      }
+    await showMysticLoading(
+      context: context,
+      title: 'Rüyan Yorumlanıyor',
+      type: MysticLoadingType.dream,
+      minimumDuration: const Duration(seconds: 5),
+      load: () async {
+        try {
+          final supabase = ref.read(safeSupabaseClientProvider);
+          if (supabase == null) {
+            throw Exception('Supabase bağlantısı yok');
+          }
+          final response = await supabase.functions.invoke(
+            'dream-interpret',
+            body: {
+              'dream_text': _dreamController.text.trim(),
+              'locale': 'tr',
+            },
+          );
 
+          if (response.status != 200) {
+            throw Exception(response.data?['message'] ?? 'Bir hata oluştu');
+          }
+
+          result = response.data;
+        } catch (e) {
+          errorMessage = e.toString();
+        }
+      },
+    );
+
+    if (mounted) {
       setState(() {
-        _interpretation = response.data;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
+        _interpretation = result;
+        _error = errorMessage;
       });
     }
   }
@@ -173,15 +182,9 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
                       width: double.infinity,
                       height: 56,
                       child: FilledButton.icon(
-                        onPressed: _isLoading ? null : _interpretDream,
-                        icon: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : const Icon(Icons.auto_awesome),
-                        label: Text(_isLoading ? 'Yorumlanıyor...' : 'Rüyamı Yorumla'),
+                        onPressed: _interpretDream,
+                        icon: const Icon(Icons.auto_awesome),
+                        label: const Text('Rüyamı Yorumla'),
                       ),
                     ),
                   ],

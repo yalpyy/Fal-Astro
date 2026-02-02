@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../data/models/fortune_reading.dart';
 import '../../providers/fortune_provider.dart';
 import '../../router/route_names.dart';
-import '../../widgets/common/loading_overlay.dart';
+import '../../widgets/loading/mystic_loading_overlay.dart';
 
 /// Fortune upload screen
 class FortuneUploadScreen extends ConsumerStatefulWidget {
@@ -120,18 +120,32 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
       return;
     }
 
-    await ref.read(createFortuneProvider.notifier).createFortune(
-          intent: _intent,
-          cupImage: _cupImage!,
-          saucerImage: _saucerImage,
-          customNote: _noteController.text.isNotEmpty ? _noteController.text : null,
-        );
+    // Use mystic loading overlay for atmospheric experience
+    await showMysticLoading(
+      context: context,
+      title: 'Falınız Bakılıyor',
+      type: MysticLoadingType.fortune,
+      minimumDuration: const Duration(seconds: 5),
+      load: () async {
+        await ref.read(createFortuneProvider.notifier).createFortune(
+              intent: _intent,
+              cupImage: _cupImage!,
+              saucerImage: _saucerImage,
+              customNote: _noteController.text.isNotEmpty ? _noteController.text : null,
+            );
+        return;
+      },
+    );
 
     final state = ref.read(createFortuneProvider);
     if (state.result != null && mounted) {
       context.goNamed(
         RouteNames.fortuneResult,
         pathParameters: {'id': state.result!.id},
+      );
+    } else if (state.error != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(state.error!)),
       );
     }
   }
@@ -145,113 +159,109 @@ class _FortuneUploadScreenState extends ConsumerState<FortuneUploadScreen> {
       appBar: AppBar(
         title: const Text('Fal Baktır'),
       ),
-      body: LoadingOverlay(
-        isLoading: createState.isLoading,
-        message: 'Falınız yorumlanıyor...',
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Error
-              if (createState.error != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    createState.error!,
-                    style: TextStyle(color: colorScheme.error),
-                  ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Error
+            if (createState.error != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-
-              // Cup image
-              Text(
-                'Fincan Fotoğrafı *',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              _ImagePickerCard(
-                imageBytes: _cupImageBytes,
-                placeholder: Icons.coffee,
-                onTap: () => _showImageSourceDialog(true),
-                onRemove: () => setState(() {
-                  _cupImage = null;
-                  _cupImageBytes = null;
-                }),
-              ),
-              const SizedBox(height: 24),
-
-              // Saucer image (optional)
-              Text(
-                'Tabak Fotoğrafı (opsiyonel)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              _ImagePickerCard(
-                imageBytes: _saucerImageBytes,
-                placeholder: Icons.circle_outlined,
-                onTap: () => _showImageSourceDialog(false),
-                onRemove: () => setState(() {
-                  _saucerImage = null;
-                  _saucerImageBytes = null;
-                }),
-              ),
-              const SizedBox(height: 24),
-
-              // Intent selection
-              Text(
-                'Niyet Seçin',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: FortuneIntent.values.map((intent) {
-                  final isSelected = _intent == intent;
-                  return ChoiceChip(
-                    label: Text(_intentLabel(intent)),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) setState(() => _intent = intent);
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-
-              // Note (optional)
-              TextField(
-                controller: _noteController,
-                decoration: const InputDecoration(
-                  labelText: 'Not (opsiyonel)',
-                  hintText: 'Aklınızdaki soruyu yazabilirsiniz...',
+                child: Text(
+                  createState.error!,
+                  style: TextStyle(color: colorScheme.error),
                 ),
-                maxLines: 3,
-                maxLength: 200,
               ),
-              const SizedBox(height: 24),
 
-              // Submit
-              ElevatedButton(
-                onPressed: _cupImage != null ? _submit : null,
-                child: const Text('Falımı Baktır'),
-              ),
-              const SizedBox(height: 16),
+            // Cup image
+            Text(
+              'Fincan Fotoğrafı *',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            _ImagePickerCard(
+              imageBytes: _cupImageBytes,
+              placeholder: Icons.coffee,
+              onTap: () => _showImageSourceDialog(true),
+              onRemove: () => setState(() {
+                _cupImage = null;
+                _cupImageBytes = null;
+              }),
+            ),
+            const SizedBox(height: 24),
 
-              // Disclaimer
-              Text(
-                'Bu yorum eğlence amaçlıdır ve profesyonel tavsiye yerine geçmez.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.outline,
-                    ),
+            // Saucer image (optional)
+            Text(
+              'Tabak Fotoğrafı (opsiyonel)',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            _ImagePickerCard(
+              imageBytes: _saucerImageBytes,
+              placeholder: Icons.circle_outlined,
+              onTap: () => _showImageSourceDialog(false),
+              onRemove: () => setState(() {
+                _saucerImage = null;
+                _saucerImageBytes = null;
+              }),
+            ),
+            const SizedBox(height: 24),
+
+            // Intent selection
+            Text(
+              'Niyet Seçin',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: FortuneIntent.values.map((intent) {
+                final isSelected = _intent == intent;
+                return ChoiceChip(
+                  label: Text(_intentLabel(intent)),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) setState(() => _intent = intent);
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+
+            // Note (optional)
+            TextField(
+              controller: _noteController,
+              decoration: const InputDecoration(
+                labelText: 'Not (opsiyonel)',
+                hintText: 'Aklınızdaki soruyu yazabilirsiniz...',
               ),
-            ],
-          ),
+              maxLines: 3,
+              maxLength: 200,
+            ),
+            const SizedBox(height: 24),
+
+            // Submit
+            ElevatedButton(
+              onPressed: _cupImage != null ? _submit : null,
+              child: const Text('Falımı Baktır'),
+            ),
+            const SizedBox(height: 16),
+
+            // Disclaimer
+            Text(
+              'Bu yorum eğlence amaçlıdır ve profesyonel tavsiye yerine geçmez.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.outline,
+                  ),
+            ),
+          ],
         ),
       ),
     );
