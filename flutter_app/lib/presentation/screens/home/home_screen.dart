@@ -8,8 +8,10 @@ import '../../providers/profile_provider.dart';
 import '../../providers/astro_provider.dart';
 import '../../router/route_names.dart';
 import '../../widgets/common/disclaimer_banner.dart';
+import '../../widgets/gamification/user_stats_card.dart';
 import 'widgets/fortune_card.dart';
 import 'widgets/astro_card.dart';
+import 'widgets/daily_affirmation_card.dart';
 
 /// Daily astro provider for home
 final dailyAstroHomeProvider = FutureProvider<void>((ref) async {
@@ -128,6 +130,18 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
 
+                // User Stats (Credits, Streak, Level)
+                UserStatsCard(
+                  onCreditsTap: () => context.pushNamed(RouteNames.shop),
+                  onAchievementsTap: () => context.pushNamed(RouteNames.achievements),
+                ),
+                const SizedBox(height: 16),
+
+                // Daily Affirmation
+                if (zodiacSign != null)
+                  DailyAffirmationCard(zodiacSign: zodiacSign),
+                const SizedBox(height: 16),
+
                 // Disclaimer
                 const DisclaimerBanner(),
                 const SizedBox(height: 24),
@@ -144,6 +158,16 @@ class HomeScreen extends ConsumerWidget {
                 // Fortune Card
                 FortuneCard(
                   onTap: () => context.pushNamed(RouteNames.fortuneUpload),
+                ),
+                const SizedBox(height: 16),
+
+                // Dreams Card
+                _FeatureCard(
+                  icon: Icons.nightlight_round,
+                  title: 'Rüya Yorumu',
+                  subtitle: 'Rüyalarının anlamını keşfet',
+                  color: Colors.indigo,
+                  onTap: () => context.pushNamed(RouteNames.dreams),
                 ),
                 const SizedBox(height: 16),
 
@@ -257,6 +281,83 @@ class _ReportTile extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _FeatureCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(0.1),
+                color.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.7),
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: colorScheme.onSurface.withOpacity(0.5),
               ),
             ],
           ),

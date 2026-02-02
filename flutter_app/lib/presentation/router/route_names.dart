@@ -33,6 +33,11 @@ class RouteNames {
 
   // Premium
   static const String premium = 'premium';
+
+  // V2 Features
+  static const String dreams = 'dreams';
+  static const String shop = 'shop';
+  static const String achievements = 'achievements';
 }
 
 /// Route paths
@@ -70,4 +75,9 @@ class RoutePaths {
 
   // Premium
   static const String premium = '/premium';
+
+  // V2 Features
+  static const String dreams = '/dreams';
+  static const String shop = '/shop';
+  static const String achievements = '/achievements';
 }

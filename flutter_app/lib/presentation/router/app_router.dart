@@ -12,6 +12,9 @@ import '../screens/fortune/fortune_result_screen.dart';
 import '../screens/astro/astro_report_screen.dart';
 import '../screens/history/history_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/dreams/dreams_screen.dart';
+import '../screens/shop/shop_screen.dart';
+import '../screens/achievements/achievements_screen.dart';
 import 'route_names.dart';
 
 /// Router provider
@@ -152,6 +155,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           return AstroReportScreen(reportId: id);
         },
+      ),
+
+      // V2 Features
+      // Dreams
+      GoRoute(
+        path: RoutePaths.dreams,
+        name: RouteNames.dreams,
+        builder: (context, state) => const DreamsScreen(),
+      ),
+
+      // Shop
+      GoRoute(
+        path: RoutePaths.shop,
+        name: RouteNames.shop,
+        builder: (context, state) => const ShopScreen(),
+      ),
+
+      // Achievements
+      GoRoute(
+        path: RoutePaths.achievements,
+        name: RouteNames.achievements,
+        builder: (context, state) => const AchievementsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
