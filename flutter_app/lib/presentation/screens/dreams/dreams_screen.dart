@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../providers/auth_provider.dart';
 import '../../widgets/loading/mystic_loading_overlay.dart';
 
@@ -17,9 +18,77 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
   Map<String, dynamic>? _interpretation;
   String? _error;
 
+  // Voice input
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
+  bool _speechAvailable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  Future<void> _initSpeech() async {
+    _speechAvailable = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'done' || status == 'notListening') {
+          if (mounted) {
+            setState(() => _isListening = false);
+          }
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() => _isListening = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Ses tanıma hatası: ${error.errorMsg}')),
+          );
+        }
+      },
+    );
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_speechAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ses tanıma bu cihazda kullanılamıyor')),
+      );
+      return;
+    }
+
+    if (_isListening) {
+      await _speech.stop();
+      setState(() => _isListening = false);
+    } else {
+      setState(() => _isListening = true);
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            // Append to existing text with space
+            final currentText = _dreamController.text;
+            if (currentText.isNotEmpty && !currentText.endsWith(' ')) {
+              _dreamController.text = '$currentText ${result.recognizedWords}';
+            } else {
+              _dreamController.text = currentText + result.recognizedWords;
+            }
+            _dreamController.selection = TextSelection.fromPosition(
+              TextPosition(offset: _dreamController.text.length),
+            );
+          });
+        },
+        localeId: 'tr_TR',
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _dreamController.dispose();
+    _speech.stop();
     super.dispose();
   }
 
@@ -144,6 +213,19 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         filled: true,
+                        suffixIcon: Padding(
+                          padding: const EdgeInsets.only(right: 8, top: 8),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _VoiceInputButton(
+                                isListening: _isListening,
+                                isAvailable: _speechAvailable,
+                                onPressed: _toggleListening,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().length < 20) {
@@ -152,6 +234,32 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
                         return null;
                       },
                     ),
+                    if (_isListening)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.mic, color: colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Dinleniyor... Rüyanızı anlatın',
+                                style: TextStyle(color: colorScheme.onPrimaryContainer),
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 16),
 
                     // Error message
@@ -557,6 +665,51 @@ class _InterpretationCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Voice input button with animated feedback
+class _VoiceInputButton extends StatelessWidget {
+  final bool isListening;
+  final bool isAvailable;
+  final VoidCallback onPressed;
+
+  const _VoiceInputButton({
+    required this.isListening,
+    required this.isAvailable,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isListening ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+        boxShadow: isListening
+            ? [
+                BoxShadow(
+                  color: colorScheme.primary.withOpacity(0.5),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                ),
+              ]
+            : null,
+      ),
+      child: IconButton(
+        icon: Icon(
+          isListening ? Icons.mic : Icons.mic_none,
+          color: isListening ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+        ),
+        onPressed: isAvailable ? onPressed : null,
+        tooltip: isAvailable
+            ? (isListening ? 'Kaydı durdur' : 'Sesle anlat')
+            : 'Ses tanıma kullanılamıyor',
+      ),
     );
   }
 }

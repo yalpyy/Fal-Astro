@@ -15,6 +15,8 @@ import '../screens/profile/profile_screen.dart';
 import '../screens/dreams/dreams_screen.dart';
 import '../screens/shop/shop_screen.dart';
 import '../screens/achievements/achievements_screen.dart';
+import '../screens/synastry/synastry_screen.dart';
+import '../screens/admin/admin_panel_screen.dart';
 import 'route_names.dart';
 
 /// Router provider
@@ -177,6 +179,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.achievements,
         name: RouteNames.achievements,
         builder: (context, state) => const AchievementsScreen(),
+      ),
+
+      // Synastry (Compatibility)
+      GoRoute(
+        path: RoutePaths.synastry,
+        name: RouteNames.synastry,
+        builder: (context, state) => const SynastryScreen(),
+      ),
+
+      // Admin Panel
+      GoRoute(
+        path: RoutePaths.admin,
+        name: RouteNames.admin,
+        builder: (context, state) => const AdminPanelScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

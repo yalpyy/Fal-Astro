@@ -38,6 +38,8 @@ class RouteNames {
   static const String dreams = 'dreams';
   static const String shop = 'shop';
   static const String achievements = 'achievements';
+  static const String synastry = 'synastry';
+  static const String admin = 'admin';
 }
 
 /// Route paths
@@ -80,4 +82,6 @@ class RoutePaths {
   static const String dreams = '/dreams';
   static const String shop = '/shop';
   static const String achievements = '/achievements';
+  static const String synastry = '/synastry';
+  static const String admin = '/admin';
 }
