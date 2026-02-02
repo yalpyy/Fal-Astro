@@ -35,7 +35,7 @@ jobs:
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
             --base-href "/Fal-Astro/"
 
-          # Base href'i kesinleştir (bazı durumlarda şaşabiliyor)
+          # Base href'i kesinleştir (bazı durumlarda şaşabiliyors)
           sed -i 's|<base href="/"\s*/>|<base href="/Fal-Astro/"/>|g' build/web/index.html
           sed -i 's|<base href="/">|<base href="/Fal-Astro/">|g' build/web/index.html
 
