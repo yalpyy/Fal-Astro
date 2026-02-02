@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/ad_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 
@@ -145,7 +146,7 @@ class ShopScreen extends ConsumerWidget {
             Card(
               color: colorScheme.tertiaryContainer,
               child: InkWell(
-                onTap: () => _showAdRewardDialog(context),
+                onTap: () => _showAdRewardDialog(context, ref),
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -219,23 +220,128 @@ class ShopScreen extends ConsumerWidget {
     );
   }
 
-  void _showAdRewardDialog(BuildContext context) {
-    showDialog(
+  Future<void> _showAdRewardDialog(BuildContext context, WidgetRef ref) async {
+    final adService = AdService.instance;
+
+    if (!adService.isRewardedAdReady) {
+      // Ad not ready, show message
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Reklam Hazırlanıyor'),
+          content: const Text(
+            'Reklam yükleniyor, lütfen birkaç saniye sonra tekrar deneyin.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tamam'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    final shouldWatch = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        icon: const Icon(Icons.play_circle_filled, size: 48),
         title: const Text('Reklam İzle'),
-        content: const Text(
-          'Reklam özelliği yakında aktif olacak.\n'
-          'Her reklam izlediğinde 1 kredi kazanacaksın!',
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Kısa bir video reklam izleyerek 1 kredi kazanabilirsin!',
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.monetization_on, color: Colors.amber),
+                SizedBox(width: 8),
+                Text(
+                  '+1 Kredi',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Tamam'),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(context, true),
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('İzle'),
           ),
         ],
       ),
     );
+
+    if (shouldWatch != true || !context.mounted) return;
+
+    // Show the ad
+    final reward = await adService.showRewardedAd();
+
+    if (!context.mounted) return;
+
+    if (reward != null && reward > 0) {
+      // Add credits to user's account
+      final supabase = ref.read(safeSupabaseClientProvider);
+      if (supabase != null) {
+        try {
+          // Call RPC to add credits
+          await supabase.rpc('add_user_credits', params: {
+            'credit_amount': 1,
+            'transaction_type': 'ad_reward',
+            'description': 'Reklam izleme ödülü',
+          });
+
+          // Refresh profile to update credits
+          ref.invalidate(profileProvider);
+
+          // Show success
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('1 kredi kazandın!'),
+                  ],
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Kredi eklenirken hata: $e')),
+            );
+          }
+        }
+      }
+    } else {
+      // Ad was cancelled or failed
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reklam tamamlanmadı, kredi verilmedi.'),
+          ),
+        );
+      }
+    }
   }
 }
 

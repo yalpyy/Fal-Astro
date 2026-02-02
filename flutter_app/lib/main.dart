@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'env/env.dart';
 import 'data/services/notification_service.dart';
+import 'core/services/ad_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,11 @@ void main() async {
     // Initialize notifications (only on mobile)
     if (!kIsWeb) {
       await NotificationService().initialize();
+    }
+
+    // Initialize Google Mobile Ads (only on mobile)
+    if (!kIsWeb) {
+      await AdService.instance.initialize();
     }
   } else {
     debugPrint('Running in demo mode - Supabase not configured');
