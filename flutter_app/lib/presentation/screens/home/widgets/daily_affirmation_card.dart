@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/supabase_service.dart';
+import '../../../providers/auth_provider.dart';
 
 /// Provider for daily affirmation
 final dailyAffirmationProvider = FutureProvider.family<Map<String, dynamic>?, String>((ref, zodiacSign) async {
-  final supabase = ref.read(supabaseServiceProvider);
+  final supabase = ref.read(safeSupabaseClientProvider);
+  if (supabase == null) return null;
+
   final today = DateTime.now().toIso8601String().split('T')[0];
 
-  final response = await supabase.client
+  final response = await supabase
       .from('daily_affirmations')
       .select()
       .eq('date', today)

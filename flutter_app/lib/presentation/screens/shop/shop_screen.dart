@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 
 /// Credit packages provider
 final creditPackagesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final supabase = ref.read(supabaseServiceProvider);
+  final supabase = ref.read(safeSupabaseClientProvider);
+  if (supabase == null) return [];
 
-  final response = await supabase.client
+  final response = await supabase
       .from('credit_packages')
       .select()
       .eq('is_active', true)

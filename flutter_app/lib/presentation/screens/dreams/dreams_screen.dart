@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../providers/auth_provider.dart';
 
 /// Dream interpretation screen
 class DreamsScreen extends ConsumerStatefulWidget {
@@ -33,8 +33,11 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
     });
 
     try {
-      final supabase = ref.read(supabaseServiceProvider);
-      final response = await supabase.client.functions.invoke(
+      final supabase = ref.read(safeSupabaseClientProvider);
+      if (supabase == null) {
+        throw Exception('Supabase bağlantısı yok');
+      }
+      final response = await supabase.functions.invoke(
         'dream-interpret',
         body: {
           'dream_text': _dreamController.text.trim(),

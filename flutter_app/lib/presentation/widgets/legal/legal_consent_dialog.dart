@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../providers/auth_provider.dart';
 
 /// Legal requirements check provider
 final legalRequirementsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final supabase = ref.read(supabaseServiceProvider);
+  final supabase = ref.read(safeSupabaseClientProvider);
   final authState = ref.watch(authProvider);
 
-  if (!authState.isAuthenticated) {
+  if (supabase == null || !authState.isAuthenticated) {
     return {'needsConsent': false};
   }
 
   // Get current versions from config
-  final configResponse = await supabase.client
+  final configResponse = await supabase
       .from('app_config')
       .select('key, value')
       .inFilter('key', ['current_terms_version', 'current_privacy_version']);
@@ -34,7 +33,7 @@ final legalRequirementsProvider = FutureProvider<Map<String, dynamic>>((ref) asy
   }
 
   // Get user's accepted versions
-  final profileResponse = await supabase.client
+  final profileResponse = await supabase
       .from('profiles')
       .select('terms_version, terms_accepted_at, privacy_version, privacy_accepted_at')
       .eq('user_id', authState.user!.id)
@@ -98,16 +97,16 @@ class _LegalConsentDialogState extends ConsumerState<LegalConsentDialog> {
     setState(() => _isLoading = true);
 
     try {
-      final supabase = ref.read(supabaseServiceProvider);
+      final supabase = ref.read(safeSupabaseClientProvider);
       final authState = ref.read(authProvider);
 
-      if (!authState.isAuthenticated) return;
+      if (supabase == null || !authState.isAuthenticated) return;
 
       final userId = authState.user!.id;
       final now = DateTime.now().toIso8601String();
 
       // Update profile with consent
-      await supabase.client.from('profiles').update({
+      await supabase.from('profiles').update({
         'terms_version': widget.termsVersion ?? '1.0',
         'terms_accepted_at': now,
         'privacy_version': widget.privacyVersion ?? '1.0',
@@ -117,7 +116,7 @@ class _LegalConsentDialogState extends ConsumerState<LegalConsentDialog> {
       }).eq('user_id', userId);
 
       // Log consent to audit log
-      await supabase.client.from('consent_audit_log').insert([
+      await supabase.from('consent_audit_log').insert([
         {
           'user_id': userId,
           'consent_type': 'terms',
@@ -373,10 +372,23 @@ class _LegalDocumentDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final supabase = ref.read(supabaseServiceProvider);
+    final supabase = ref.read(safeSupabaseClientProvider);
+
+    if (supabase == null) {
+      return AlertDialog(
+        title: Text(docType == 'terms' ? 'Kullanım Koşulları' : 'Gizlilik Politikası'),
+        content: const Text('Bağlantı sağlanamadı.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Kapat'),
+          ),
+        ],
+      );
+    }
 
     return FutureBuilder<Map<String, dynamic>?>(
-      future: supabase.client
+      future: supabase
           .from('legal_documents')
           .select()
           .eq('doc_type', docType)

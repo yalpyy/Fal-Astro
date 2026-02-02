@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../providers/auth_provider.dart';
 
 /// All achievements provider
 final allAchievementsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final supabase = ref.read(supabaseServiceProvider);
+  final supabase = ref.read(safeSupabaseClientProvider);
+  if (supabase == null) return [];
 
-  final response = await supabase.client
+  final response = await supabase
       .from('achievements')
       .select()
       .eq('is_active', true)
@@ -18,12 +18,12 @@ final allAchievementsProvider = FutureProvider<List<Map<String, dynamic>>>((ref)
 
 /// User achievements provider
 final userAchievementsProvider = FutureProvider<List<String>>((ref) async {
-  final supabase = ref.read(supabaseServiceProvider);
+  final supabase = ref.read(safeSupabaseClientProvider);
   final authState = ref.watch(authProvider);
 
-  if (!authState.isAuthenticated) return [];
+  if (supabase == null || !authState.isAuthenticated) return [];
 
-  final response = await supabase.client
+  final response = await supabase
       .from('user_achievements')
       .select('achievement_id')
       .eq('user_id', authState.user!.id);
