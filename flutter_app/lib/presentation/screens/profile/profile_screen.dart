@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/utils/formatters.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../router/route_names.dart';
 
 /// Profile and settings screen
 class ProfileScreen extends ConsumerWidget {
@@ -111,9 +113,7 @@ class ProfileScreen extends ConsumerWidget {
                 leading: const Icon(Icons.notifications),
                 title: const Text('Bildirimler'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  // TODO: Notification settings
-                },
+                onTap: () => context.pushNamed(RouteNames.notificationSettings),
               ),
             ],
           ),
@@ -128,9 +128,7 @@ class ProfileScreen extends ConsumerWidget {
                   title: const Text('Premium\'a Geç'),
                   subtitle: const Text('Sınırsız fal ve rapor'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    // TODO: Premium screen
-                  },
+                  onTap: () => context.pushNamed(RouteNames.shop),
                 ),
               ],
             ),
@@ -142,24 +140,21 @@ class ProfileScreen extends ConsumerWidget {
               ListTile(
                 leading: const Icon(Icons.privacy_tip),
                 title: const Text('Gizlilik Politikası'),
-                onTap: () {
-                  // TODO: Privacy policy
-                },
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.pushNamed(RouteNames.privacyPolicy),
               ),
               ListTile(
                 leading: const Icon(Icons.description),
                 title: const Text('Kullanım Koşulları'),
-                onTap: () {
-                  // TODO: Terms
-                },
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.pushNamed(RouteNames.termsOfService),
               ),
               ListTile(
                 leading: const Icon(Icons.info),
                 title: const Text('Uygulama Hakkında'),
-                subtitle: const Text('Versiyon 1.0.0'),
-                onTap: () {
-                  // TODO: About
-                },
+                subtitle: const Text('Versiyon 2.0.0'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.pushNamed(RouteNames.about),
               ),
             ],
           ),

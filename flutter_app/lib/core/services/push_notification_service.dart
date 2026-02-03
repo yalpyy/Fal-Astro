@@ -3,6 +3,46 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// Notification type for deep linking
+enum NotificationType {
+  fortune,
+  dream,
+  horoscope,
+  promotion,
+  general,
+}
+
+/// Notification payload data
+class NotificationPayload {
+  final NotificationType type;
+  final String? targetId;
+  final Map<String, dynamic> extra;
+
+  const NotificationPayload({
+    required this.type,
+    this.targetId,
+    this.extra = const {},
+  });
+
+  factory NotificationPayload.fromMap(Map<String, dynamic> data) {
+    final typeStr = data['type'] as String? ?? 'general';
+    final type = NotificationType.values.firstWhere(
+      (e) => e.name == typeStr,
+      orElse: () => NotificationType.general,
+    );
+
+    return NotificationPayload(
+      type: type,
+      targetId: data['target_id'] as String?,
+      extra: data,
+    );
+  }
+}
+
+/// Callback for handling notification navigation
+typedef NotificationNavigationCallback = void Function(NotificationPayload payload);
 
 /// Background message handler - must be top-level function
 @pragma('vm:entry-point')
@@ -25,6 +65,9 @@ class PushNotificationService {
 
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
+
+  /// Navigation callback - set this to handle notification taps
+  NotificationNavigationCallback? onNotificationTap;
 
   /// Android notification channel
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
@@ -64,8 +107,13 @@ class PushNotificationService {
       _messaging.onTokenRefresh.listen((token) {
         _fcmToken = token;
         debugPrint('FCM Token refreshed: $token');
-        // TODO: Update token in backend
+        _updateTokenInBackend(token);
       });
+
+      // Save initial token to backend
+      if (_fcmToken != null) {
+        _updateTokenInBackend(_fcmToken!);
+      }
 
       // Initialize local notifications
       await _initializeLocalNotifications();
@@ -148,15 +196,43 @@ class PushNotificationService {
   /// Handle notification tap
   void _handleNotificationTap(RemoteMessage message) {
     debugPrint('Notification tapped: ${message.data}');
-    // TODO: Navigate based on notification data
-    // Example: if (message.data['type'] == 'fortune') navigate to fortune result
+
+    if (onNotificationTap != null) {
+      final payload = NotificationPayload.fromMap(message.data);
+      onNotificationTap!(payload);
+    }
   }
 
   /// Handle local notification tap
   void _handleLocalNotificationTap(String? payload) {
     if (payload == null) return;
     debugPrint('Local notification tapped: $payload');
-    // TODO: Parse payload and navigate
+
+    if (onNotificationTap != null) {
+      try {
+        final data = jsonDecode(payload) as Map<String, dynamic>;
+        final notificationPayload = NotificationPayload.fromMap(data);
+        onNotificationTap!(notificationPayload);
+      } catch (e) {
+        debugPrint('Error parsing notification payload: $e');
+      }
+    }
+  }
+
+  /// Get route name based on notification type
+  static String getRouteForNotification(NotificationPayload payload) {
+    switch (payload.type) {
+      case NotificationType.fortune:
+        return payload.targetId != null ? '/fortune/${payload.targetId}' : '/fortune/upload';
+      case NotificationType.dream:
+        return '/dreams';
+      case NotificationType.horoscope:
+        return '/astro/report';
+      case NotificationType.promotion:
+        return '/shop';
+      case NotificationType.general:
+        return '/home';
+    }
   }
 
   /// Subscribe to a topic
@@ -188,6 +264,31 @@ class PushNotificationService {
     // Subscribe to promotions
     if (promotions) {
       await subscribeToTopic('promotions');
+    }
+  }
+
+  /// Update FCM token in backend
+  Future<void> _updateTokenInBackend(String token) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser?.id;
+
+      if (userId == null) {
+        debugPrint('Cannot update FCM token: user not authenticated');
+        return;
+      }
+
+      await supabase.rpc('update_fcm_token', params: {'token': token});
+      debugPrint('FCM token updated in backend');
+    } catch (e) {
+      debugPrint('Error updating FCM token: $e');
+    }
+  }
+
+  /// Manually save current token to backend (call after login)
+  Future<void> saveTokenToBackend() async {
+    if (_fcmToken != null) {
+      await _updateTokenInBackend(_fcmToken!);
     }
   }
 }

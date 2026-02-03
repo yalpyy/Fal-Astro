@@ -30,6 +30,7 @@ class RouteNames {
   static const String notificationSettings = 'notification-settings';
   static const String privacyPolicy = 'privacy-policy';
   static const String termsOfService = 'terms-of-service';
+  static const String about = 'about';
 
   // Premium
   static const String premium = 'premium';
@@ -74,6 +75,7 @@ class RoutePaths {
   static const String notificationSettings = '/settings/notifications';
   static const String privacyPolicy = '/settings/privacy';
   static const String termsOfService = '/settings/terms';
+  static const String about = '/about';
 
   // Premium
   static const String premium = '/premium';

@@ -17,6 +17,10 @@ import '../screens/shop/shop_screen.dart';
 import '../screens/achievements/achievements_screen.dart';
 import '../screens/synastry/synastry_screen.dart';
 import '../screens/admin/admin_panel_screen.dart';
+import '../screens/profile/notification_settings_screen.dart';
+import '../screens/profile/privacy_policy_screen.dart';
+import '../screens/profile/terms_screen.dart';
+import '../screens/profile/about_screen.dart';
 import 'route_names.dart';
 
 /// Router provider
@@ -193,6 +197,28 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.admin,
         name: RouteNames.admin,
         builder: (context, state) => const AdminPanelScreen(),
+      ),
+
+      // Profile sub-screens
+      GoRoute(
+        path: RoutePaths.notificationSettings,
+        name: RouteNames.notificationSettings,
+        builder: (context, state) => const NotificationSettingsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.privacyPolicy,
+        name: RouteNames.privacyPolicy,
+        builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.termsOfService,
+        name: RouteNames.termsOfService,
+        builder: (context, state) => const TermsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.about,
+        name: RouteNames.about,
+        builder: (context, state) => const AboutScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
