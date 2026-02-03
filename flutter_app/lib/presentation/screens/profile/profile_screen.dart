@@ -35,13 +35,47 @@ class ProfileScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                CircleAvatar(
-                  radius: 48,
-                  backgroundColor: colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.person,
-                    size: 48,
-                    color: colorScheme.primary,
+                // Profile avatar with edit button
+                GestureDetector(
+                  onTap: () => context.pushNamed(RouteNames.profileEdit),
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 48,
+                        backgroundColor: colorScheme.primaryContainer,
+                        backgroundImage: profileState.profile?.avatarUrl != null
+                            ? NetworkImage(profileState.profile!.avatarUrl!)
+                            : null,
+                        child: profileState.profile?.avatarUrl == null
+                            ? Icon(
+                                Icons.person,
+                                size: 48,
+                                color: colorScheme.primary,
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: colorScheme.surface,
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.edit,
+                            color: colorScheme.onPrimary,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),

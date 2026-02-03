@@ -26,6 +26,9 @@ class RouteNames {
   static const String astroReportDetail = 'astro-report-detail';
   static const String compatReport = 'compat-report';
 
+  // Profile
+  static const String profileEdit = 'profile-edit';
+
   // Settings
   static const String settings = 'settings';
   static const String languageSettings = 'language-settings';
@@ -73,6 +76,9 @@ class RoutePaths {
   static const String astroReport = '/astro/report';
   static const String astroReportDetail = '/astro/report/:id';
   static const String compatReport = '/astro/compat';
+
+  // Profile
+  static const String profileEdit = '/profile/edit';
 
   // Settings
   static const String settings = '/settings';

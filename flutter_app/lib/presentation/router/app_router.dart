@@ -14,6 +14,7 @@ import '../screens/horoscope/daily_horoscope_screen.dart';
 import '../screens/horoscope/zodiac_detail_screen.dart';
 import '../screens/history/history_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/profile/profile_edit_page.dart';
 import '../screens/dreams/dreams_screen.dart';
 import '../screens/shop/shop_screen.dart';
 import '../screens/achievements/achievements_screen.dart';
@@ -225,6 +226,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Profile sub-screens
+      GoRoute(
+        path: RoutePaths.profileEdit,
+        name: RouteNames.profileEdit,
+        builder: (context, state) => const ProfileEditPage(),
+      ),
       GoRoute(
         path: RoutePaths.notificationSettings,
         name: RouteNames.notificationSettings,
