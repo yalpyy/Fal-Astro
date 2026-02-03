@@ -1,6 +1,9 @@
--- Add credits RPC function
--- This function adds credits to a user's account and logs the transaction
+-- ============================================================================
+-- Add credits RPC functions
+-- IDEMPOTENT: Safe to run multiple times
+-- ============================================================================
 
+-- Add credits to a user's account and log the transaction
 CREATE OR REPLACE FUNCTION add_user_credits(
   credit_amount INT,
   transaction_type TEXT DEFAULT 'ad_reward',
@@ -59,11 +62,13 @@ GRANT EXECUTE ON FUNCTION add_user_credits(INT, TEXT, TEXT) TO authenticated;
 -- Create credit_transactions table if not exists
 CREATE TABLE IF NOT EXISTS credit_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   amount INT NOT NULL,
-  transaction_type TEXT NOT NULL CHECK (transaction_type IN ('purchase', 'usage', 'ad_reward', 'bonus', 'refund', 'daily_bonus')),
+  balance_after INTEGER,
+  transaction_type TEXT NOT NULL,
   description TEXT,
   reference_id TEXT, -- For purchase receipts, etc.
+  reference_type VARCHAR(50),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -75,11 +80,13 @@ CREATE INDEX IF NOT EXISTS idx_credit_transactions_created_at ON credit_transact
 ALTER TABLE credit_transactions ENABLE ROW LEVEL SECURITY;
 
 -- Users can only view their own transactions
+DROP POLICY IF EXISTS "Users can view own credit transactions" ON credit_transactions;
 CREATE POLICY "Users can view own credit transactions"
   ON credit_transactions FOR SELECT
   USING (auth.uid() = user_id);
 
 -- Only system can insert (via RPC)
+DROP POLICY IF EXISTS "System can insert credit transactions" ON credit_transactions;
 CREATE POLICY "System can insert credit transactions"
   ON credit_transactions FOR INSERT
   WITH CHECK (auth.uid() = user_id);
@@ -106,3 +113,7 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION check_daily_ad_limit() TO authenticated;
+
+-- ============================================================================
+-- MIGRATION COMPLETE
+-- ============================================================================

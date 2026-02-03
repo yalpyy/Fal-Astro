@@ -2,6 +2,7 @@
 -- FAL & ASTRO - Daily Horoscope Extended Columns
 -- Migration: 20240203000000_daily_horoscope_columns.sql
 -- Adds columns for offline horoscope generation with planetary data
+-- IDEMPOTENT: Safe to run multiple times
 -- ============================================================================
 
 -- Add extended columns to daily_affirmations for detailed horoscope data
@@ -91,14 +92,17 @@ CREATE INDEX IF NOT EXISTS idx_natal_chart_user ON natal_chart_cache(user_id);
 ALTER TABLE natal_chart_cache ENABLE ROW LEVEL SECURITY;
 
 -- Users can view their own chart
+DROP POLICY IF EXISTS natal_chart_select_own ON natal_chart_cache;
 CREATE POLICY natal_chart_select_own ON natal_chart_cache FOR SELECT
     USING (auth.uid() = user_id);
 
 -- Users can insert their own chart
+DROP POLICY IF EXISTS natal_chart_insert_own ON natal_chart_cache;
 CREATE POLICY natal_chart_insert_own ON natal_chart_cache FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
 -- Users can update their own chart
+DROP POLICY IF EXISTS natal_chart_update_own ON natal_chart_cache;
 CREATE POLICY natal_chart_update_own ON natal_chart_cache FOR UPDATE
     USING (auth.uid() = user_id);
 
@@ -154,6 +158,7 @@ CREATE TABLE IF NOT EXISTS planetary_transits (
 -- Public read access for transits
 ALTER TABLE planetary_transits ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS planetary_transits_select_all ON planetary_transits;
 CREATE POLICY planetary_transits_select_all ON planetary_transits FOR SELECT
     USING (TRUE);
 

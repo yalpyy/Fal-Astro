@@ -1,6 +1,7 @@
 -- ============================================================================
 -- FAL & ASTRO V2 ULTIMATE MIGRATION
 -- "Self-Running Mystic Super App" with GDPR/KVKK Compliance
+-- IDEMPOTENT: Safe to run multiple times
 -- ============================================================================
 
 -- ============================================================================
@@ -43,8 +44,8 @@ CREATE TABLE IF NOT EXISTS consent_audit_log (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_consent_audit_user ON consent_audit_log(user_id);
-CREATE INDEX idx_consent_audit_type ON consent_audit_log(consent_type, action);
+CREATE INDEX IF NOT EXISTS idx_consent_audit_user ON consent_audit_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_consent_audit_type ON consent_audit_log(consent_type, action);
 
 -- ============================================================================
 -- 2. GAMIFICATION & ENGAGEMENT
@@ -85,7 +86,7 @@ CREATE TABLE IF NOT EXISTS user_achievements (
     UNIQUE(user_id, achievement_id)
 );
 
-CREATE INDEX idx_user_achievements_user ON user_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_id);
 
 -- ============================================================================
 -- 3. AUTOMATED DAILY CONTENT (SELF-FEEDING SYSTEM)
@@ -111,8 +112,8 @@ CREATE TABLE IF NOT EXISTS daily_affirmations (
     PRIMARY KEY (date, zodiac_sign, locale)
 );
 
-CREATE INDEX idx_daily_affirmations_date ON daily_affirmations(date);
-CREATE INDEX idx_daily_affirmations_sign ON daily_affirmations(zodiac_sign);
+CREATE INDEX IF NOT EXISTS idx_daily_affirmations_date ON daily_affirmations(date);
+CREATE INDEX IF NOT EXISTS idx_daily_affirmations_sign ON daily_affirmations(zodiac_sign);
 
 -- Daily tarot card (auto-generated)
 CREATE TABLE IF NOT EXISTS daily_tarot (
@@ -156,9 +157,9 @@ CREATE TABLE IF NOT EXISTS dreams (
     is_favorite BOOLEAN DEFAULT FALSE
 );
 
-CREATE INDEX idx_dreams_user ON dreams(user_id);
-CREATE INDEX idx_dreams_status ON dreams(status);
-CREATE INDEX idx_dreams_created ON dreams(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_dreams_user ON dreams(user_id);
+CREATE INDEX IF NOT EXISTS idx_dreams_status ON dreams(status);
+CREATE INDEX IF NOT EXISTS idx_dreams_created ON dreams(created_at DESC);
 
 -- Dream symbols dictionary
 CREATE TABLE IF NOT EXISTS dream_symbols (
@@ -198,7 +199,7 @@ CREATE TABLE IF NOT EXISTS fortune_shares (
     shared_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_fortune_shares_reading ON fortune_shares(reading_id);
+CREATE INDEX IF NOT EXISTS idx_fortune_shares_reading ON fortune_shares(reading_id);
 
 -- ============================================================================
 -- 6. SYNASTRY & COMPATIBILITY (NEW)
@@ -230,7 +231,7 @@ CREATE TABLE IF NOT EXISTS synastry_reports (
     completed_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_synastry_user ON synastry_reports(user_id);
+CREATE INDEX IF NOT EXISTS idx_synastry_user ON synastry_reports(user_id);
 
 -- ============================================================================
 -- 7. MONETIZATION & CREDITS
@@ -257,7 +258,7 @@ CREATE TABLE IF NOT EXISTS credit_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     amount INTEGER NOT NULL, -- positive = add, negative = spend
-    balance_after INTEGER NOT NULL,
+    balance_after INTEGER,
     transaction_type VARCHAR(30) NOT NULL, -- 'purchase', 'spend', 'reward', 'refund', 'admin', 'ad_reward'
     description TEXT,
     reference_id UUID, -- ID of the reading/report that used credits
@@ -267,8 +268,8 @@ CREATE TABLE IF NOT EXISTS credit_transactions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_credit_transactions_user ON credit_transactions(user_id);
-CREATE INDEX idx_credit_transactions_type ON credit_transactions(transaction_type);
+CREATE INDEX IF NOT EXISTS idx_credit_transactions_user ON credit_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_credit_transactions_type ON credit_transactions(transaction_type);
 
 -- Ad rewards tracking
 CREATE TABLE IF NOT EXISTS ad_rewards (
@@ -283,8 +284,8 @@ CREATE TABLE IF NOT EXISTS ad_rewards (
     device_id VARCHAR(255)
 );
 
-CREATE INDEX idx_ad_rewards_user ON ad_rewards(user_id);
-CREATE INDEX idx_ad_rewards_date ON ad_rewards(watched_at);
+CREATE INDEX IF NOT EXISTS idx_ad_rewards_user ON ad_rewards(user_id);
+CREATE INDEX IF NOT EXISTS idx_ad_rewards_date ON ad_rewards(watched_at);
 
 -- ============================================================================
 -- 8. APP CONFIGURATION
@@ -330,8 +331,8 @@ CREATE TABLE IF NOT EXISTS push_tokens (
     UNIQUE(user_id, token)
 );
 
-CREATE INDEX idx_push_tokens_user ON push_tokens(user_id);
-CREATE INDEX idx_push_tokens_active ON push_tokens(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_push_tokens_user ON push_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_push_tokens_active ON push_tokens(is_active) WHERE is_active = TRUE;
 
 -- Notification templates
 CREATE TABLE IF NOT EXISTS notification_templates (
@@ -362,8 +363,8 @@ CREATE TABLE IF NOT EXISTS notification_history (
     clicked_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_notification_history_user ON notification_history(user_id);
-CREATE INDEX idx_notification_history_sent ON notification_history(sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_history_user ON notification_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_notification_history_sent ON notification_history(sent_at DESC);
 
 -- ============================================================================
 -- 10. ADMIN & ANALYTICS
@@ -390,9 +391,9 @@ CREATE TABLE IF NOT EXISTS analytics_events (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_analytics_events_name ON analytics_events(event_name);
-CREATE INDEX idx_analytics_events_user ON analytics_events(user_id);
-CREATE INDEX idx_analytics_events_date ON analytics_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_name ON analytics_events(event_name);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_user ON analytics_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_date ON analytics_events(created_at DESC);
 
 -- Daily aggregated stats
 CREATE TABLE IF NOT EXISTS daily_stats (
@@ -416,63 +417,77 @@ CREATE TABLE IF NOT EXISTS daily_stats (
 -- Dreams RLS
 ALTER TABLE dreams ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS dreams_select_own ON dreams;
 CREATE POLICY dreams_select_own ON dreams FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS dreams_insert_own ON dreams;
 CREATE POLICY dreams_insert_own ON dreams FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS dreams_update_own ON dreams;
 CREATE POLICY dreams_update_own ON dreams FOR UPDATE
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS dreams_delete_own ON dreams;
 CREATE POLICY dreams_delete_own ON dreams FOR DELETE
     USING (auth.uid() = user_id);
 
 -- Synastry RLS
 ALTER TABLE synastry_reports ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS synastry_select_own ON synastry_reports;
 CREATE POLICY synastry_select_own ON synastry_reports FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS synastry_insert_own ON synastry_reports;
 CREATE POLICY synastry_insert_own ON synastry_reports FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
 -- Credit transactions RLS
 ALTER TABLE credit_transactions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS credit_transactions_select_own ON credit_transactions;
 CREATE POLICY credit_transactions_select_own ON credit_transactions FOR SELECT
     USING (auth.uid() = user_id);
 
 -- Daily affirmations (public read)
 ALTER TABLE daily_affirmations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS daily_affirmations_select_all ON daily_affirmations;
 CREATE POLICY daily_affirmations_select_all ON daily_affirmations FOR SELECT
     USING (TRUE);
 
 -- Consent audit log (user can only see their own)
 ALTER TABLE consent_audit_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS consent_audit_select_own ON consent_audit_log;
 CREATE POLICY consent_audit_select_own ON consent_audit_log FOR SELECT
     USING (auth.uid() = user_id);
 
 -- Push tokens RLS
 ALTER TABLE push_tokens ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS push_tokens_select_own ON push_tokens;
 CREATE POLICY push_tokens_select_own ON push_tokens FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS push_tokens_insert_own ON push_tokens;
 CREATE POLICY push_tokens_insert_own ON push_tokens FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS push_tokens_update_own ON push_tokens;
 CREATE POLICY push_tokens_update_own ON push_tokens FOR UPDATE
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS push_tokens_delete_own ON push_tokens;
 CREATE POLICY push_tokens_delete_own ON push_tokens FOR DELETE
     USING (auth.uid() = user_id);
 
 -- User achievements RLS
 ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS user_achievements_select_own ON user_achievements;
 CREATE POLICY user_achievements_select_own ON user_achievements FOR SELECT
     USING (auth.uid() = user_id);
 
@@ -516,7 +531,7 @@ BEGIN
     -- Get current credits
     SELECT credits INTO v_current_credits
     FROM profiles
-    WHERE user_id = p_user_id
+    WHERE id = p_user_id
     FOR UPDATE;
 
     IF v_current_credits < p_amount THEN
@@ -528,7 +543,7 @@ BEGIN
     -- Update profile
     UPDATE profiles
     SET credits = v_new_balance
-    WHERE user_id = p_user_id;
+    WHERE id = p_user_id;
 
     -- Log transaction
     INSERT INTO credit_transactions (user_id, amount, balance_after, transaction_type, reference_type, reference_id)
@@ -551,7 +566,7 @@ DECLARE
 BEGIN
     UPDATE profiles
     SET credits = credits + p_amount
-    WHERE user_id = p_user_id
+    WHERE id = p_user_id
     RETURNING credits INTO v_new_balance;
 
     -- Log transaction
@@ -583,16 +598,16 @@ BEGIN
     IF p_consent_type = 'terms' AND p_action = 'accepted' THEN
         UPDATE profiles
         SET terms_version = p_version, terms_accepted_at = NOW()
-        WHERE user_id = p_user_id;
+        WHERE id = p_user_id;
     ELSIF p_consent_type = 'privacy' AND p_action = 'accepted' THEN
         UPDATE profiles
         SET privacy_version = p_version, privacy_accepted_at = NOW()
-        WHERE user_id = p_user_id;
+        WHERE id = p_user_id;
     ELSIF p_consent_type = 'marketing' THEN
         UPDATE profiles
         SET marketing_consent = (p_action = 'accepted'),
             marketing_consent_at = NOW()
-        WHERE user_id = p_user_id;
+        WHERE id = p_user_id;
     END IF;
 
     RETURN v_log_id;

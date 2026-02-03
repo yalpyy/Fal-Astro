@@ -1,6 +1,7 @@
 -- ============================================================================
 -- FAL & ASTRO - Initial Database Schema
 -- Migration: 20240101000000_initial_schema.sql
+-- IDEMPOTENT: Safe to run multiple times
 -- ============================================================================
 
 -- Enable UUID extension
@@ -20,11 +21,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================================================
--- TABLES
+-- TABLES (IF NOT EXISTS)
 -- ============================================================================
 
 -- Profiles table (extends auth.users)
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT,
     avatar_url TEXT,
@@ -36,7 +37,7 @@ CREATE TABLE public.profiles (
 COMMENT ON TABLE public.profiles IS 'User profiles extending auth.users';
 
 -- Birth profiles table
-CREATE TABLE public.birth_profiles (
+CREATE TABLE IF NOT EXISTS public.birth_profiles (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     birth_date DATE NOT NULL,
     birth_time TIME, -- Nullable: user might not know exact time
@@ -53,7 +54,7 @@ CREATE TABLE public.birth_profiles (
 COMMENT ON TABLE public.birth_profiles IS 'Birth information for astrology calculations';
 
 -- Fortune readings table
-CREATE TABLE public.fortune_readings (
+CREATE TABLE IF NOT EXISTS public.fortune_readings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     intent TEXT NOT NULL CHECK (intent IN ('love', 'money', 'career', 'general')),
@@ -74,7 +75,7 @@ CREATE TABLE public.fortune_readings (
 COMMENT ON TABLE public.fortune_readings IS 'Coffee fortune reading records';
 
 -- Fortune feedback table (for "Tuttu mu?" feature)
-CREATE TABLE public.fortune_feedback (
+CREATE TABLE IF NOT EXISTS public.fortune_feedback (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     reading_id UUID NOT NULL REFERENCES public.fortune_readings(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -89,7 +90,7 @@ CREATE TABLE public.fortune_feedback (
 COMMENT ON TABLE public.fortune_feedback IS 'User feedback on fortune reading accuracy';
 
 -- Astro reports table
-CREATE TABLE public.astro_reports (
+CREATE TABLE IF NOT EXISTS public.astro_reports (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     report_type TEXT NOT NULL CHECK (report_type IN ('natal', 'weekly', 'monthly', 'yearly', 'love', 'career')),
@@ -107,7 +108,7 @@ CREATE TABLE public.astro_reports (
 COMMENT ON TABLE public.astro_reports IS 'Generated astrology reports';
 
 -- Daily astro cache table
-CREATE TABLE public.daily_astro_cache (
+CREATE TABLE IF NOT EXISTS public.daily_astro_cache (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     zodiac_sign TEXT NOT NULL,
@@ -122,7 +123,7 @@ CREATE TABLE public.daily_astro_cache (
 COMMENT ON TABLE public.daily_astro_cache IS 'Cached daily horoscope per user';
 
 -- Subscriptions table
-CREATE TABLE public.subscriptions (
+CREATE TABLE IF NOT EXISTS public.subscriptions (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     provider TEXT NOT NULL CHECK (provider IN ('apple', 'google', 'manual')),
     product_id TEXT,
@@ -139,7 +140,7 @@ CREATE TABLE public.subscriptions (
 COMMENT ON TABLE public.subscriptions IS 'User subscription and premium status';
 
 -- Usage limits table (for rate limiting)
-CREATE TABLE public.usage_limits (
+CREATE TABLE IF NOT EXISTS public.usage_limits (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     fortune_count INTEGER DEFAULT 0,
@@ -153,7 +154,7 @@ CREATE TABLE public.usage_limits (
 COMMENT ON TABLE public.usage_limits IS 'Daily usage tracking for rate limiting';
 
 -- Pending feedback reminders (for 7-day feedback prompt)
-CREATE TABLE public.feedback_reminders (
+CREATE TABLE IF NOT EXISTS public.feedback_reminders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     reading_id UUID NOT NULL REFERENCES public.fortune_readings(id) ON DELETE CASCADE,
@@ -166,69 +167,75 @@ CREATE TABLE public.feedback_reminders (
 COMMENT ON TABLE public.feedback_reminders IS 'Schedule for fortune feedback reminders';
 
 -- ============================================================================
--- INDEXES
+-- INDEXES (IF NOT EXISTS)
 -- ============================================================================
 
 -- Profiles
-CREATE INDEX idx_profiles_created_at ON public.profiles(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_profiles_created_at ON public.profiles(created_at DESC);
 
 -- Birth profiles
-CREATE INDEX idx_birth_profiles_birth_date ON public.birth_profiles(birth_date);
+CREATE INDEX IF NOT EXISTS idx_birth_profiles_birth_date ON public.birth_profiles(birth_date);
 
 -- Fortune readings
-CREATE INDEX idx_fortune_readings_user_id ON public.fortune_readings(user_id);
-CREATE INDEX idx_fortune_readings_created_at ON public.fortune_readings(created_at DESC);
-CREATE INDEX idx_fortune_readings_user_created ON public.fortune_readings(user_id, created_at DESC);
-CREATE INDEX idx_fortune_readings_status ON public.fortune_readings(status) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_fortune_readings_user_id ON public.fortune_readings(user_id);
+CREATE INDEX IF NOT EXISTS idx_fortune_readings_created_at ON public.fortune_readings(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_fortune_readings_user_created ON public.fortune_readings(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_fortune_readings_status ON public.fortune_readings(status) WHERE status = 'pending';
 
 -- Fortune feedback
-CREATE INDEX idx_fortune_feedback_user_id ON public.fortune_feedback(user_id);
-CREATE INDEX idx_fortune_feedback_reading_id ON public.fortune_feedback(reading_id);
+CREATE INDEX IF NOT EXISTS idx_fortune_feedback_user_id ON public.fortune_feedback(user_id);
+CREATE INDEX IF NOT EXISTS idx_fortune_feedback_reading_id ON public.fortune_feedback(reading_id);
 
 -- Astro reports
-CREATE INDEX idx_astro_reports_user_id ON public.astro_reports(user_id);
-CREATE INDEX idx_astro_reports_user_type ON public.astro_reports(user_id, report_type);
-CREATE INDEX idx_astro_reports_created_at ON public.astro_reports(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_astro_reports_user_id ON public.astro_reports(user_id);
+CREATE INDEX IF NOT EXISTS idx_astro_reports_user_type ON public.astro_reports(user_id, report_type);
+CREATE INDEX IF NOT EXISTS idx_astro_reports_created_at ON public.astro_reports(created_at DESC);
 
 -- Daily astro cache
-CREATE INDEX idx_daily_astro_cache_date ON public.daily_astro_cache(date);
+CREATE INDEX IF NOT EXISTS idx_daily_astro_cache_date ON public.daily_astro_cache(date);
 
 -- Subscriptions
-CREATE INDEX idx_subscriptions_status ON public.subscriptions(status) WHERE status = 'active';
-CREATE INDEX idx_subscriptions_expires_at ON public.subscriptions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON public.subscriptions(status) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS idx_subscriptions_expires_at ON public.subscriptions(expires_at);
 
 -- Usage limits
-CREATE INDEX idx_usage_limits_date ON public.usage_limits(date);
+CREATE INDEX IF NOT EXISTS idx_usage_limits_date ON public.usage_limits(date);
 
 -- Feedback reminders
-CREATE INDEX idx_feedback_reminders_remind_at ON public.feedback_reminders(remind_at) WHERE reminded = FALSE;
-CREATE INDEX idx_feedback_reminders_user_id ON public.feedback_reminders(user_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_reminders_remind_at ON public.feedback_reminders(remind_at) WHERE reminded = FALSE;
+CREATE INDEX IF NOT EXISTS idx_feedback_reminders_user_id ON public.feedback_reminders(user_id);
 
 -- ============================================================================
--- TRIGGERS
+-- TRIGGERS (DROP IF EXISTS + CREATE)
 -- ============================================================================
 
 -- Auto-update updated_at for all tables with that column
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at
     BEFORE UPDATE ON public.profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_birth_profiles_updated_at ON public.birth_profiles;
 CREATE TRIGGER update_birth_profiles_updated_at
     BEFORE UPDATE ON public.birth_profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_fortune_readings_updated_at ON public.fortune_readings;
 CREATE TRIGGER update_fortune_readings_updated_at
     BEFORE UPDATE ON public.fortune_readings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_astro_reports_updated_at ON public.astro_reports;
 CREATE TRIGGER update_astro_reports_updated_at
     BEFORE UPDATE ON public.astro_reports
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_subscriptions_updated_at ON public.subscriptions;
 CREATE TRIGGER update_subscriptions_updated_at
     BEFORE UPDATE ON public.subscriptions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_usage_limits_updated_at ON public.usage_limits;
 CREATE TRIGGER update_usage_limits_updated_at
     BEFORE UPDATE ON public.usage_limits
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -244,16 +251,19 @@ BEGIN
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', '')
-    );
+    )
+    ON CONFLICT (id) DO NOTHING;
 
     -- Initialize subscription with free tier
     INSERT INTO public.subscriptions (user_id, provider, status, tier)
-    VALUES (NEW.id, 'manual', 'active', 'free');
+    VALUES (NEW.id, 'manual', 'active', 'free')
+    ON CONFLICT (user_id) DO NOTHING;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
@@ -274,6 +284,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_fortune_completed ON public.fortune_readings;
 CREATE TRIGGER on_fortune_completed
     AFTER UPDATE ON public.fortune_readings
     FOR EACH ROW EXECUTE FUNCTION public.create_feedback_reminder();
@@ -294,22 +305,60 @@ ALTER TABLE public.usage_limits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feedback_reminders ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
+-- RLS POLICIES (DROP IF EXISTS + CREATE)
+-- ============================================================================
+
+-- Helper function to safely create policy
+CREATE OR REPLACE FUNCTION create_policy_if_not_exists(
+    p_policy_name TEXT,
+    p_table_name TEXT,
+    p_command TEXT,
+    p_using TEXT DEFAULT NULL,
+    p_check TEXT DEFAULT NULL
+) RETURNS VOID AS $$
+DECLARE
+    policy_exists BOOLEAN;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE policyname = p_policy_name
+        AND tablename = p_table_name
+    ) INTO policy_exists;
+
+    IF NOT policy_exists THEN
+        EXECUTE format(
+            'CREATE POLICY %I ON %I FOR %s %s %s',
+            p_policy_name,
+            p_table_name,
+            p_command,
+            CASE WHEN p_using IS NOT NULL THEN 'USING (' || p_using || ')' ELSE '' END,
+            CASE WHEN p_check IS NOT NULL THEN 'WITH CHECK (' || p_check || ')' ELSE '' END
+        );
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================================
 -- RLS POLICIES: profiles
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile"
     ON public.profiles FOR SELECT
     USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
 CREATE POLICY "Users can insert own profile"
     ON public.profiles FOR INSERT
     WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile"
     ON public.profiles FOR UPDATE
     USING (auth.uid() = id)
     WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can delete own profile" ON public.profiles;
 CREATE POLICY "Users can delete own profile"
     ON public.profiles FOR DELETE
     USING (auth.uid() = id);
@@ -318,19 +367,23 @@ CREATE POLICY "Users can delete own profile"
 -- RLS POLICIES: birth_profiles
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Users can view own birth profile" ON public.birth_profiles;
 CREATE POLICY "Users can view own birth profile"
     ON public.birth_profiles FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own birth profile" ON public.birth_profiles;
 CREATE POLICY "Users can insert own birth profile"
     ON public.birth_profiles FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own birth profile" ON public.birth_profiles;
 CREATE POLICY "Users can update own birth profile"
     ON public.birth_profiles FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own birth profile" ON public.birth_profiles;
 CREATE POLICY "Users can delete own birth profile"
     ON public.birth_profiles FOR DELETE
     USING (auth.uid() = user_id);
@@ -339,19 +392,23 @@ CREATE POLICY "Users can delete own birth profile"
 -- RLS POLICIES: fortune_readings
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Users can view own fortune readings" ON public.fortune_readings;
 CREATE POLICY "Users can view own fortune readings"
     ON public.fortune_readings FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own fortune readings" ON public.fortune_readings;
 CREATE POLICY "Users can insert own fortune readings"
     ON public.fortune_readings FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own fortune readings" ON public.fortune_readings;
 CREATE POLICY "Users can update own fortune readings"
     ON public.fortune_readings FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own fortune readings" ON public.fortune_readings;
 CREATE POLICY "Users can delete own fortune readings"
     ON public.fortune_readings FOR DELETE
     USING (auth.uid() = user_id);
@@ -360,19 +417,23 @@ CREATE POLICY "Users can delete own fortune readings"
 -- RLS POLICIES: fortune_feedback
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Users can view own feedback" ON public.fortune_feedback;
 CREATE POLICY "Users can view own feedback"
     ON public.fortune_feedback FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own feedback" ON public.fortune_feedback;
 CREATE POLICY "Users can insert own feedback"
     ON public.fortune_feedback FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own feedback" ON public.fortune_feedback;
 CREATE POLICY "Users can update own feedback"
     ON public.fortune_feedback FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own feedback" ON public.fortune_feedback;
 CREATE POLICY "Users can delete own feedback"
     ON public.fortune_feedback FOR DELETE
     USING (auth.uid() = user_id);
@@ -381,19 +442,23 @@ CREATE POLICY "Users can delete own feedback"
 -- RLS POLICIES: astro_reports
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Users can view own astro reports" ON public.astro_reports;
 CREATE POLICY "Users can view own astro reports"
     ON public.astro_reports FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own astro reports" ON public.astro_reports;
 CREATE POLICY "Users can insert own astro reports"
     ON public.astro_reports FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own astro reports" ON public.astro_reports;
 CREATE POLICY "Users can update own astro reports"
     ON public.astro_reports FOR UPDATE
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own astro reports" ON public.astro_reports;
 CREATE POLICY "Users can delete own astro reports"
     ON public.astro_reports FOR DELETE
     USING (auth.uid() = user_id);
@@ -402,10 +467,12 @@ CREATE POLICY "Users can delete own astro reports"
 -- RLS POLICIES: daily_astro_cache
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Users can view own daily astro" ON public.daily_astro_cache;
 CREATE POLICY "Users can view own daily astro"
     ON public.daily_astro_cache FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own daily astro" ON public.daily_astro_cache;
 CREATE POLICY "Users can insert own daily astro"
     ON public.daily_astro_cache FOR INSERT
     WITH CHECK (auth.uid() = user_id);
@@ -414,6 +481,7 @@ CREATE POLICY "Users can insert own daily astro"
 -- RLS POLICIES: subscriptions
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Users can view own subscription" ON public.subscriptions;
 CREATE POLICY "Users can view own subscription"
     ON public.subscriptions FOR SELECT
     USING (auth.uid() = user_id);
@@ -425,6 +493,7 @@ CREATE POLICY "Users can view own subscription"
 -- RLS POLICIES: usage_limits
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Users can view own usage" ON public.usage_limits;
 CREATE POLICY "Users can view own usage"
     ON public.usage_limits FOR SELECT
     USING (auth.uid() = user_id);
@@ -435,6 +504,7 @@ CREATE POLICY "Users can view own usage"
 -- RLS POLICIES: feedback_reminders
 -- ============================================================================
 
+DROP POLICY IF EXISTS "Users can view own reminders" ON public.feedback_reminders;
 CREATE POLICY "Users can view own reminders"
     ON public.feedback_reminders FOR SELECT
     USING (auth.uid() = user_id);
@@ -443,15 +513,16 @@ CREATE POLICY "Users can view own reminders"
 -- STORAGE BUCKET SETUP
 -- ============================================================================
 
--- Note: Run these via Supabase Dashboard or supabase CLI
--- INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
--- VALUES (
---     'fortune-images',
---     'fortune-images',
---     false,
---     5242880, -- 5MB
---     ARRAY['image/jpeg', 'image/png', 'image/webp']
--- );
+-- Create storage bucket if not exists
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+    'fortune-images',
+    'fortune-images',
+    false,
+    5242880, -- 5MB
+    ARRAY['image/jpeg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- STORAGE RLS POLICIES
@@ -461,6 +532,7 @@ CREATE POLICY "Users can view own reminders"
 -- Path format: {user_id}/{reading_id}/{filename}
 
 -- SELECT policy
+DROP POLICY IF EXISTS "Users can view own fortune images" ON storage.objects;
 CREATE POLICY "Users can view own fortune images"
     ON storage.objects FOR SELECT
     USING (
@@ -469,6 +541,7 @@ CREATE POLICY "Users can view own fortune images"
     );
 
 -- INSERT policy
+DROP POLICY IF EXISTS "Users can upload own fortune images" ON storage.objects;
 CREATE POLICY "Users can upload own fortune images"
     ON storage.objects FOR INSERT
     WITH CHECK (
@@ -477,6 +550,7 @@ CREATE POLICY "Users can upload own fortune images"
     );
 
 -- UPDATE policy
+DROP POLICY IF EXISTS "Users can update own fortune images" ON storage.objects;
 CREATE POLICY "Users can update own fortune images"
     ON storage.objects FOR UPDATE
     USING (
@@ -485,6 +559,7 @@ CREATE POLICY "Users can update own fortune images"
     );
 
 -- DELETE policy
+DROP POLICY IF EXISTS "Users can delete own fortune images" ON storage.objects;
 CREATE POLICY "Users can delete own fortune images"
     ON storage.objects FOR DELETE
     USING (
@@ -582,3 +657,7 @@ BEGIN
     END;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
+
+-- ============================================================================
+-- MIGRATION COMPLETE
+-- ============================================================================
