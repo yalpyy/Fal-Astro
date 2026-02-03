@@ -1,6 +1,11 @@
 /**
  * CRON Daily Generator Edge Function
- * Automatically generates daily affirmations for all 12 zodiac signs
+ * Automatically generates daily horoscopes for all 12 zodiac signs
+ *
+ * Supports two modes:
+ * 1. LLM mode (default): Uses AI for unique, creative content (requires API key)
+ * 2. Offline mode: Uses astronomical calculations + templates (FREE, no API needed)
+ *
  * Triggered by Supabase CRON job (recommended: 03:00 AM daily)
  *
  * Setup:
@@ -12,7 +17,7 @@
  *      $$SELECT net.http_post(
  *        url := 'https://YOUR_PROJECT.supabase.co/functions/v1/cron-daily-generator',
  *        headers := '{"Authorization": "Bearer YOUR_SERVICE_ROLE_KEY", "Content-Type": "application/json"}'::jsonb,
- *        body := '{"generate_for": "tomorrow"}'::jsonb
+ *        body := '{"generate_for": "tomorrow", "use_offline": true}'::jsonb
  *      )$$
  *    );
  */
@@ -21,6 +26,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCors, jsonResponse, errorResponse } from '../_shared/cors.ts';
 import { getLLMProviderFromEnv, LLMMessage } from '../_shared/llm_provider.ts';
+import { generateAllDailyHoroscopes, DailyHoroscope } from '../_shared/daily_horoscope_generator.ts';
 
 // Zodiac signs
 const ZODIAC_SIGNS = [
@@ -129,6 +135,7 @@ serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const generateFor = body.generate_for || 'tomorrow';
     const locale = body.locale || 'tr';
+    const useOffline = body.use_offline ?? true; // Default to offline (free) mode
 
     // Calculate target date
     const today = new Date();
@@ -165,6 +172,74 @@ serve(async (req: Request) => {
         skipped: true,
       });
     }
+
+    // ============ OFFLINE MODE (FREE - No API cost) ============
+    if (useOffline) {
+      console.log(`Using OFFLINE mode for ${targetDateStr} (no API cost)`);
+
+      // Generate horoscopes using astronomical calculations
+      const horoscopes = generateAllDailyHoroscopes(targetDate);
+
+      // Convert to database format
+      const insertData = horoscopes.map((h: DailyHoroscope) => ({
+        date: targetDateStr,
+        zodiac_sign: h.sign,
+        content_text: h.general,
+        love_text: h.love,
+        career_text: h.career,
+        health_text: h.health,
+        theme: 'general',
+        mood_keywords: ['pozitif', 'enerjik', 'ilham verici'],
+        lucky_number: h.luckyNumbers[0],
+        lucky_numbers: h.luckyNumbers,
+        lucky_color: h.luckyColor,
+        power_crystal: POWER_CRYSTALS[ZODIAC_SIGNS.indexOf(h.sign) % POWER_CRYSTALS.length],
+        overall_score: h.scores.overall,
+        love_score: h.scores.love,
+        career_score: h.scores.career,
+        health_score: h.scores.health,
+        moon_phase: h.moonPhase,
+        planetary_influence: h.planetaryInfluence,
+        locale: locale,
+        is_manually_edited: false,
+        generated_at: new Date().toISOString(),
+        generation_mode: 'offline',
+      }));
+
+      // Upsert to database
+      const { data: inserted, error: insertError } = await supabase
+        .from('daily_affirmations')
+        .upsert(insertData, {
+          onConflict: 'date,zodiac_sign,locale',
+          ignoreDuplicates: false,
+        })
+        .select();
+
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        return errorResponse(`Database error: ${insertError.message}`, 500, 'db_error');
+      }
+
+      console.log(`Successfully generated ${inserted?.length || 0} horoscopes OFFLINE for ${targetDateStr}`);
+
+      // Also generate daily tarot
+      await generateDailyTarot(supabase, targetDateStr, locale).catch(err => {
+        console.error('Tarot generation failed (non-fatal):', err);
+      });
+
+      return jsonResponse({
+        success: true,
+        message: 'Daily content generated successfully (OFFLINE mode)',
+        date: targetDateStr,
+        affirmations_count: inserted?.length || 0,
+        locale: locale,
+        mode: 'offline',
+        api_cost: 0,
+      });
+    }
+
+    // ============ LLM MODE (Requires API key) ============
+    console.log(`Using LLM mode for ${targetDateStr}`);
 
     // Generate with LLM
     const messages: LLMMessage[] = [
