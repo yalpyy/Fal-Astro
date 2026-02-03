@@ -20,6 +20,8 @@ class RouteNames {
 
   // Astro
   static const String dailyAstro = 'daily-astro';
+  static const String dailyHoroscope = 'daily-horoscope';
+  static const String zodiacDetail = 'zodiac-detail';
   static const String astroReport = 'astro-report';
   static const String astroReportDetail = 'astro-report-detail';
   static const String compatReport = 'compat-report';
@@ -66,6 +68,8 @@ class RoutePaths {
 
   // Astro
   static const String dailyAstro = '/astro/daily';
+  static const String dailyHoroscope = '/horoscope';
+  static const String zodiacDetail = '/horoscope/:id';
   static const String astroReport = '/astro/report';
   static const String astroReportDetail = '/astro/report/:id';
   static const String compatReport = '/astro/compat';

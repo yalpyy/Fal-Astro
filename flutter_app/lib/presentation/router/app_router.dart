@@ -10,6 +10,8 @@ import '../screens/home/home_screen.dart';
 import '../screens/fortune/fortune_upload_screen.dart';
 import '../screens/fortune/fortune_result_screen.dart';
 import '../screens/astro/astro_report_screen.dart';
+import '../screens/horoscope/daily_horoscope_screen.dart';
+import '../screens/horoscope/zodiac_detail_screen.dart';
 import '../screens/history/history_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/dreams/dreams_screen.dart';
@@ -120,7 +122,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const DreamsScreen(),
           ),
 
-          // Astro - Tab 4
+          // Daily Horoscope (Burçlar) - Tab 4
+          GoRoute(
+            path: RoutePaths.dailyHoroscope,
+            name: RouteNames.dailyHoroscope,
+            builder: (context, state) => const DailyHoroscopeScreen(),
+          ),
+
+          // Astro Report (accessible from horoscope or home)
           GoRoute(
             path: RoutePaths.astroReport,
             name: RouteNames.astroReport,
@@ -163,6 +172,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return FortuneResultScreen(readingId: id);
+        },
+      ),
+
+      // Zodiac Detail (full screen with Hero)
+      GoRoute(
+        path: RoutePaths.zodiacDetail,
+        name: RouteNames.zodiacDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return ZodiacDetailScreen(zodiacId: id);
         },
       ),
 
@@ -263,7 +282,7 @@ class MainBottomNav extends ConsumerWidget {
       currentIndex = 1;
     } else if (currentPath.startsWith('/dreams')) {
       currentIndex = 2;
-    } else if (currentPath.startsWith('/astro')) {
+    } else if (currentPath.startsWith('/horoscope') || currentPath.startsWith('/astro')) {
       currentIndex = 3;
     } else if (currentPath.startsWith('/profile')) {
       currentIndex = 4;
@@ -283,7 +302,7 @@ class MainBottomNav extends ConsumerWidget {
             context.goNamed(RouteNames.dreams);
             break;
           case 3:
-            context.goNamed(RouteNames.astroReport);
+            context.goNamed(RouteNames.dailyHoroscope);
             break;
           case 4:
             context.goNamed(RouteNames.profile);
@@ -307,9 +326,9 @@ class MainBottomNav extends ConsumerWidget {
           label: 'Rüya',
         ),
         NavigationDestination(
-          icon: Icon(Icons.auto_awesome_outlined),
-          selectedIcon: Icon(Icons.auto_awesome),
-          label: 'Astro',
+          icon: Icon(Icons.star_outline),
+          selectedIcon: Icon(Icons.star),
+          label: 'Burçlar',
         ),
         NavigationDestination(
           icon: Icon(Icons.person_outline),
