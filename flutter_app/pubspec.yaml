@@ -50,8 +50,12 @@ dependencies:
   url_launcher: ^6.2.3
   package_info_plus: ^5.0.1
 
-  # Voice Input
+  # Voice Input/Output
   speech_to_text: ^6.6.0
+  flutter_tts: ^3.8.5
+
+  # HTTP Client
+  http: ^1.2.0
 
   # Sharing
   share_plus: ^7.2.2

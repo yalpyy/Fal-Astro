@@ -1,292 +1,188 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../data/services/horoscope_service.dart';
+import '../../../data/services/tts_service.dart';
 import 'daily_horoscope_screen.dart';
 
-/// Daily horoscope data model
-class DailyHoroscope {
-  final String loveReading;
-  final String careerReading;
-  final String healthReading;
-  final int luckyNumber;
-  final String luckyColor;
-  final String luckyColorHex;
-  final int overallScore;
-  final int loveScore;
-  final int careerScore;
-  final int healthScore;
-  final String mood;
+/// Horoscope service provider
+final horoscopeServiceProvider = Provider((ref) => HoroscopeService());
 
-  const DailyHoroscope({
-    required this.loveReading,
-    required this.careerReading,
-    required this.healthReading,
-    required this.luckyNumber,
-    required this.luckyColor,
-    required this.luckyColorHex,
-    required this.overallScore,
-    required this.loveScore,
-    required this.careerScore,
-    required this.healthScore,
-    required this.mood,
-  });
-}
+/// TTS service provider
+final ttsServiceProvider = Provider((ref) => TtsService());
 
-/// Generate daily horoscope based on zodiac and date
-DailyHoroscope generateDailyHoroscope(String zodiacId, DateTime date) {
-  // Use seeded random for consistent daily results
-  final seed = zodiacId.hashCode + date.year * 10000 + date.month * 100 + date.day;
-  final random = Random(seed);
+/// Selected period provider
+final selectedPeriodProvider = StateProvider<HoroscopePeriod>((ref) => HoroscopePeriod.today);
 
-  final loveReadings = [
-    'Bugün aşk hayatınızda yeni kapılar açılabilir. Kalbinizi dinleyin ve içgüdülerinize güvenin.',
-    'Romantik ilişkinizde daha açık iletişim kurmanın zamanı geldi. Duygularınızı paylaşmaktan çekinmeyin.',
-    'Venüs etkisiyle çekiciliğiniz artıyor. Yeni tanışmalar için harika bir gün.',
-    'Partnerinizle özel bir anı paylaşabilirsiniz. Birlikte geçireceğiniz zaman değerli olacak.',
-    'Geçmiş ilişkilerden gelen dersler bugün size yol gösterecek. Öğrendiklerinizi uygulayın.',
-    'Duygusal derinlik arayışınız sizi doğru kişiye yönlendirebilir. Sabırlı olun.',
-  ];
+/// Horoscope data provider
+final horoscopeDataProvider = FutureProvider.family<HoroscopeData, (String, HoroscopePeriod)>(
+  (ref, params) async {
+    final service = ref.read(horoscopeServiceProvider);
+    return service.getDailyHoroscope(params.$1, params.$2);
+  },
+);
 
-  final careerReadings = [
-    'İş hayatında önemli fırsatlar kapınızı çalabilir. Hazırlıklı olun ve proaktif davranın.',
-    'Yaratıcı projeleriniz için mükemmel bir gün. Fikirlerinizi cesurca paylaşın.',
-    'Ekip çalışması bugün size başarı getirecek. İş arkadaşlarınızla uyum içinde çalışın.',
-    'Finansal konularda dikkatli kararlar alın. Uzun vadeli düşünmek faydalı olacak.',
-    'Kariyer hedeflerinizi gözden geçirmek için ideal bir zaman. Yeni stratejiler geliştirin.',
-    'Liderlik yetenekleriniz ön plana çıkıyor. İnisiyatif almaktan çekinmeyin.',
-  ];
-
-  final healthReadings = [
-    'Fiziksel aktiviteye zaman ayırın. Kısa bir yürüyüş bile enerjinizi yükseltecektir.',
-    'Stres yönetimi bugün önemli. Meditasyon veya nefes egzersizleri deneyin.',
-    'Beslenmenize dikkat edin. Taze meyve ve sebzeler vücudunuza iyi gelecek.',
-    'Uyku düzeninizi gözden geçirin. Kaliteli bir gece uykusu her şeyi değiştirebilir.',
-    'Zihinsel sağlığınıza önem verin. Sevdiklerinizle vakit geçirmek iyi hissettirecek.',
-    'Enerji seviyeniz yüksek. Bu enerjiyi spor veya hobilerle değerlendirin.',
-  ];
-
-  final moods = ['Pozitif', 'Enerjik', 'Sakin', 'Heyecanlı', 'Duygusal', 'Kararlı'];
-
-  final colors = [
-    ('Kırmızı', 'FF0000'),
-    ('Mavi', '0000FF'),
-    ('Yeşil', '00FF00'),
-    ('Mor', '800080'),
-    ('Turuncu', 'FFA500'),
-    ('Pembe', 'FFC0CB'),
-    ('Sarı', 'FFFF00'),
-    ('Turkuaz', '40E0D0'),
-    ('Altın', 'FFD700'),
-    ('Gümüş', 'C0C0C0'),
-  ];
-
-  final colorChoice = colors[random.nextInt(colors.length)];
-
-  return DailyHoroscope(
-    loveReading: loveReadings[random.nextInt(loveReadings.length)],
-    careerReading: careerReadings[random.nextInt(careerReadings.length)],
-    healthReading: healthReadings[random.nextInt(healthReadings.length)],
-    luckyNumber: random.nextInt(99) + 1,
-    luckyColor: colorChoice.$1,
-    luckyColorHex: colorChoice.$2,
-    overallScore: 60 + random.nextInt(40),
-    loveScore: 50 + random.nextInt(50),
-    careerScore: 50 + random.nextInt(50),
-    healthScore: 50 + random.nextInt(50),
-    mood: moods[random.nextInt(moods.length)],
-  );
-}
-
-/// Zodiac detail screen with daily readings
-class ZodiacDetailScreen extends ConsumerWidget {
+/// Zodiac detail screen with new design
+class ZodiacDetailScreen extends ConsumerStatefulWidget {
   final String zodiacId;
 
   const ZodiacDetailScreen({super.key, required this.zodiacId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ZodiacDetailScreen> createState() => _ZodiacDetailScreenState();
+}
+
+class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
+  final TtsService _ttsService = TtsService();
+  bool _isSpeaking = false;
+  String _selectedZodiacId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedZodiacId = widget.zodiacId;
+    _ttsService.init();
+  }
+
+  @override
+  void dispose() {
+    _ttsService.stop();
+    super.dispose();
+  }
+
+  void _toggleSpeech(String text) async {
+    if (_isSpeaking) {
+      await _ttsService.stop();
+      setState(() => _isSpeaking = false);
+    } else {
+      setState(() => _isSpeaking = true);
+      await _ttsService.speak(text);
+      // Listen for completion
+      Future.delayed(Duration(seconds: _ttsService.estimateDuration(text) + 1), () {
+        if (mounted) {
+          setState(() => _isSpeaking = false);
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedPeriod = ref.watch(selectedPeriodProvider);
+    final horoscopeAsync = ref.watch(horoscopeDataProvider((_selectedZodiacId, selectedPeriod)));
+
     final zodiac = zodiacSigns.firstWhere(
-      (z) => z.id == zodiacId,
+      (z) => z.id == _selectedZodiacId,
       orElse: () => zodiacSigns.first,
     );
 
-    final horoscope = generateDailyHoroscope(zodiacId, DateTime.now());
-
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Hero app bar
-          SliverAppBar(
-            expandedHeight: 220,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Hero(
-                tag: 'zodiac_$zodiacId',
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        zodiac.primaryColor,
-                        zodiac.secondaryColor,
-                      ],
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Decorative elements
-                      Positioned(
-                        top: -80,
-                        right: -80,
-                        child: _GlassCircle(size: 200, opacity: 0.1),
-                      ),
-                      Positioned(
-                        bottom: -60,
-                        left: -60,
-                        child: _GlassCircle(size: 150, opacity: 0.15),
-                      ),
-                      // Content
-                      SafeArea(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(height: 40),
-                              Text(
-                                zodiac.symbol,
-                                style: const TextStyle(
-                                  fontSize: 64,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black26,
-                                      offset: Offset(2, 2),
-                                      blurRadius: 8,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                zodiac.name,
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 2,
-                                ),
-                              ),
-                              Text(
-                                zodiac.dateRange,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white.withOpacity(0.9),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+      backgroundColor: const Color(0xFF0D0D1A),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header with back button and zodiac selector
+            _buildHeader(context, zodiac),
+
+            // Title
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Burçlar',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ),
             ),
-            leading: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
-                  shape: BoxShape.circle,
+
+            const SizedBox(height: 16),
+
+            // Period tabs
+            _buildPeriodTabs(selectedPeriod),
+
+            // Content
+            Expanded(
+              child: horoscopeAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(color: Colors.white54),
                 ),
-                child: const Icon(Icons.arrow_back, color: Colors.white),
+                error: (e, _) => Center(
+                  child: Text('Hata: $e', style: const TextStyle(color: Colors.white54)),
+                ),
+                data: (horoscope) => _buildContent(zodiac, horoscope),
               ),
-              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, ZodiacSign zodiac) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Back button
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A2E),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+              child: const Icon(
+                Icons.chevron_left,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
           ),
 
-          // Content
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          // Zodiac selector dropdown
+          GestureDetector(
+            onTap: () => _showZodiacPicker(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A2E),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.15),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Overall score card
-                  _ScoreCard(
-                    title: 'Günlük Genel Puan',
-                    score: horoscope.overallScore,
-                    color: zodiac.primaryColor,
-                    mood: horoscope.mood,
+                  Text(
+                    zodiac.symbol,
+                    style: const TextStyle(fontSize: 18),
                   ),
-                  const SizedBox(height: 16),
-
-                  // Meta data cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _MetaCard(
-                          icon: Icons.tag,
-                          title: 'Günün Sayısı',
-                          value: '${horoscope.luckyNumber}',
-                          color: zodiac.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _MetaCard(
-                          icon: Icons.palette,
-                          title: 'Şanslı Renk',
-                          value: horoscope.luckyColor,
-                          color: Color(int.parse('FF${horoscope.luckyColorHex}', radix: 16)),
-                          showColorDot: true,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(width: 8),
+                  Text(
+                    zodiac.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Reading sections
-                  _ReadingCard(
-                    icon: Icons.favorite,
-                    title: 'Aşk',
-                    reading: horoscope.loveReading,
-                    score: horoscope.loveScore,
-                    color: const Color(0xFFE91E63),
-                    gradientColors: [
-                      const Color(0xFFE91E63).withOpacity(0.1),
-                      const Color(0xFFF48FB1).withOpacity(0.05),
-                    ],
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Colors.white.withValues(alpha: 0.7),
+                    size: 20,
                   ),
-                  const SizedBox(height: 12),
-
-                  _ReadingCard(
-                    icon: Icons.work,
-                    title: 'İş',
-                    reading: horoscope.careerReading,
-                    score: horoscope.careerScore,
-                    color: const Color(0xFF2196F3),
-                    gradientColors: [
-                      const Color(0xFF2196F3).withOpacity(0.1),
-                      const Color(0xFF90CAF9).withOpacity(0.05),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  _ReadingCard(
-                    icon: Icons.health_and_safety,
-                    title: 'Sağlık',
-                    reading: horoscope.healthReading,
-                    score: horoscope.healthScore,
-                    color: const Color(0xFF4CAF50),
-                    gradientColors: [
-                      const Color(0xFF4CAF50).withOpacity(0.1),
-                      const Color(0xFFA5D6A7).withOpacity(0.05),
-                    ],
-                  ),
-
-                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -295,344 +191,700 @@ class ZodiacDetailScreen extends ConsumerWidget {
       ),
     );
   }
-}
 
-/// Glass circle decoration
-class _GlassCircle extends StatelessWidget {
-  final double size;
-  final double opacity;
-
-  const _GlassCircle({
-    required this.size,
-    required this.opacity,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withOpacity(opacity),
-        border: Border.all(
-          color: Colors.white.withOpacity(opacity * 2),
-          width: 1,
-        ),
+  void _showZodiacPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A1A2E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-    );
-  }
-}
-
-/// Overall score card with liquid glass effect
-class _ScoreCard extends StatelessWidget {
-  final String title;
-  final int score;
-  final Color color;
-  final String mood;
-
-  const _ScoreCard({
-    required this.title,
-    required this.score,
-    required this.color,
-    required this.mood,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color.withOpacity(0.15),
-            color.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Score circle
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [color, color.withOpacity(0.7)],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.4),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                '$score',
-                style: const TextStyle(
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Burç Seçin',
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 28,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.mood, size: 18, color: color),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Ruh Hali: $mood',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: score / 100,
-                    minHeight: 8,
-                    backgroundColor: color.withOpacity(0.2),
-                    valueColor: AlwaysStoppedAnimation(color),
+              const SizedBox(height: 20),
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    childAspectRatio: 0.9,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+                  itemCount: zodiacSigns.length,
+                  itemBuilder: (context, index) {
+                    final sign = zodiacSigns[index];
+                    final isSelected = sign.id == _selectedZodiacId;
 
-/// Meta data card (lucky number, color)
-class _MetaCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final Color color;
-  final bool showColorDot;
-
-  const _MetaCard({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.color,
-    this.showColorDot = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.9),
-            Colors.white.withOpacity(0.7),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.5),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color, color.withOpacity(0.7)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: Colors.white, size: 22),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (showColorDot) ...[
-                Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withOpacity(0.5),
-                        blurRadius: 4,
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() => _selectedZodiacId = sign.id);
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? sign.primaryColor.withValues(alpha: 0.3)
+                              : Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected
+                                ? sign.primaryColor
+                                : Colors.white.withValues(alpha: 0.1),
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              sign.symbol,
+                              style: const TextStyle(fontSize: 28),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              sign.name,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                fontSize: 11,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPeriodTabs(HoroscopePeriod selectedPeriod) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: HoroscopePeriod.values.map((period) {
+          final isSelected = period == selectedPeriod;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                ref.read(selectedPeriodProvider.notifier).state = period;
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.3)
+                        : Colors.transparent,
+                  ),
+                ),
+                child: Text(
+                  period.label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildContent(ZodiacSign zodiac, HoroscopeData horoscope) {
+    final estimatedDuration = _ttsService.estimateDuration(horoscope.horoscopeText);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // Constellation visual
+          _buildConstellationVisual(zodiac),
+
+          const SizedBox(height: 32),
+
+          // Scores section
+          _buildScoresSection(horoscope),
+
+          const SizedBox(height: 24),
+
+          // Listen button
+          _buildListenButton(horoscope.horoscopeText, estimatedDuration),
+
+          const SizedBox(height: 20),
+
+          // Horoscope text
+          _buildHoroscopeText(horoscope.horoscopeText),
+
+          const SizedBox(height: 20),
+
+          // Read more button
+          _buildReadMoreButton(),
+
+          const SizedBox(height: 16),
+
+          // Ad label
+          Text(
+            'Reklam',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.4),
+              fontSize: 12,
+            ),
+          ),
+
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
-}
 
-/// Reading card with gradient and liquid glass effect
-class _ReadingCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String reading;
-  final int score;
-  final Color color;
-  final List<Color> gradientColors;
+  Widget _buildConstellationVisual(ZodiacSign zodiac) {
+    return Hero(
+      tag: 'zodiac_${zodiac.id}',
+      child: Column(
+        children: [
+          // Constellation dots (simplified visual)
+          SizedBox(
+            height: 120,
+            child: CustomPaint(
+              size: const Size(200, 120),
+              painter: _ConstellationPainter(zodiac.id),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            zodiac.name,
+            style: const TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.w300,
+              color: Colors.white,
+              letterSpacing: 2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  const _ReadingCard({
-    required this.icon,
-    required this.title,
-    required this.reading,
-    required this.score,
-    required this.color,
-    required this.gradientColors,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildScoresSection(HoroscopeData horoscope) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradientColors,
-        ),
+        color: const Color(0xFF1A1A2E),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
+          color: Colors.white.withValues(alpha: 0.1),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
-                ),
-              ),
-              // Score badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.star, color: Colors.white, size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$score',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Reading text
           Text(
-            reading,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  height: 1.6,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
-                ),
+            'Skorlar',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Career score
+          _buildScoreRow(
+            icon: Icons.work_outline,
+            iconColor: const Color(0xFF4A9DFF),
+            label: 'Kariyer',
+            score: horoscope.careerScore,
+            barColor: const Color(0xFF4A9DFF),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Love score
+          _buildScoreRow(
+            icon: Icons.favorite_outline,
+            iconColor: const Color(0xFFFF6B6B),
+            label: 'Aşk',
+            score: horoscope.loveScore,
+            barColor: const Color(0xFFFF6B6B),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Money score
+          _buildScoreRow(
+            icon: Icons.attach_money,
+            iconColor: const Color(0xFF4ADE80),
+            label: 'Para',
+            score: horoscope.moneyScore,
+            barColor: const Color(0xFF4ADE80),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildScoreRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required int score,
+    required Color barColor,
+  }) {
+    return Row(
+      children: [
+        // Icon container
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        const SizedBox(width: 12),
+
+        // Label
+        SizedBox(
+          width: 60,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 14,
+            ),
+          ),
+        ),
+
+        // Score number
+        SizedBox(
+          width: 24,
+          child: Text(
+            '$score',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+
+        // Progress bar
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: score / 10,
+              minHeight: 8,
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation(barColor),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildListenButton(String text, int duration) {
+    return GestureDetector(
+      onTap: () => _toggleSpeech(text),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _isSpeaking
+                    ? Colors.red.withValues(alpha: 0.2)
+                    : Colors.white.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _isSpeaking ? Icons.stop : Icons.play_arrow,
+                color: _isSpeaking ? Colors.red : Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isSpeaking ? 'Durdur' : 'Dinle',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  '~$duration saniye',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHoroscopeText(String text) {
+    // Show truncated text with fade
+    final displayText = text.length > 150 ? '${text.substring(0, 150)}...' : text;
+
+    return ShaderMask(
+      shaderCallback: (bounds) {
+        return LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            Colors.white,
+            Colors.white.withValues(alpha: 0.0),
+          ],
+          stops: const [0.0, 0.7, 1.0],
+        ).createShader(bounds);
+      },
+      blendMode: BlendMode.dstIn,
+      child: Text(
+        displayText,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.8),
+          fontSize: 16,
+          height: 1.6,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReadMoreButton() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF7C3AED), Color(0xFF5B21B6)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // Show full reading in a dialog or navigate to full page
+            _showFullReading();
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Derinlemesine Oku',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward,
+                color: Colors.white,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showFullReading() {
+    final selectedPeriod = ref.read(selectedPeriodProvider);
+    final horoscopeAsync = ref.read(horoscopeDataProvider((_selectedZodiacId, selectedPeriod)));
+
+    horoscopeAsync.whenData((horoscope) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: const Color(0xFF0D0D1A),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        builder: (context) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.85,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (context, scrollController) {
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        const Icon(Icons.auto_awesome, color: Color(0xFF7C3AED)),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Detaylı Yorum',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close, color: Colors.white54),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: scrollController,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Lucky items
+                            Row(
+                              children: [
+                                _buildLuckyItem(
+                                  icon: Icons.tag,
+                                  label: 'Şanslı Sayı',
+                                  value: '${horoscope.luckyNumber}',
+                                ),
+                                const SizedBox(width: 12),
+                                _buildLuckyItem(
+                                  icon: Icons.palette,
+                                  label: 'Şanslı Renk',
+                                  value: horoscope.luckyColor,
+                                ),
+                                const SizedBox(width: 12),
+                                _buildLuckyItem(
+                                  icon: Icons.mood,
+                                  label: 'Ruh Hali',
+                                  value: horoscope.mood,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              horoscope.horoscopeText,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: 16,
+                                height: 1.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+    });
+  }
+
+  Widget _buildLuckyItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: const Color(0xFF7C3AED), size: 20),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.5),
+                fontSize: 10,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Custom painter for constellation visualization
+class _ConstellationPainter extends CustomPainter {
+  final String zodiacId;
+
+  _ConstellationPainter(this.zodiacId);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.7)
+      ..style = PaintingStyle.fill;
+
+    final linePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    // Generate constellation points based on zodiac
+    final points = _getConstellationPoints(zodiacId, size);
+
+    // Draw lines between points
+    for (int i = 0; i < points.length - 1; i++) {
+      canvas.drawLine(points[i], points[i + 1], linePaint);
+    }
+
+    // Draw points
+    for (final point in points) {
+      // Outer glow
+      canvas.drawCircle(
+        point,
+        6,
+        Paint()..color = Colors.white.withValues(alpha: 0.1),
+      );
+      // Inner dot
+      canvas.drawCircle(point, 3, paint);
+    }
+  }
+
+  List<Offset> _getConstellationPoints(String zodiacId, Size size) {
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+
+    // Different constellation patterns for each sign
+    switch (zodiacId) {
+      case 'kova': // Aquarius
+        return [
+          Offset(centerX - 60, centerY - 30),
+          Offset(centerX - 30, centerY - 20),
+          Offset(centerX, centerY - 10),
+          Offset(centerX + 30, centerY),
+          Offset(centerX + 60, centerY + 10),
+          Offset(centerX + 40, centerY + 30),
+          Offset(centerX + 20, centerY + 40),
+        ];
+      case 'balik': // Pisces
+        return [
+          Offset(centerX - 50, centerY - 20),
+          Offset(centerX - 20, centerY - 30),
+          Offset(centerX + 10, centerY - 20),
+          Offset(centerX + 40, centerY),
+          Offset(centerX + 10, centerY + 20),
+          Offset(centerX - 20, centerY + 30),
+          Offset(centerX - 50, centerY + 20),
+        ];
+      default: // Generic pattern
+        return [
+          Offset(centerX - 40, centerY - 30),
+          Offset(centerX - 10, centerY - 40),
+          Offset(centerX + 20, centerY - 30),
+          Offset(centerX + 50, centerY - 10),
+          Offset(centerX + 30, centerY + 20),
+          Offset(centerX, centerY + 30),
+          Offset(centerX - 30, centerY + 20),
+        ];
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
