@@ -134,6 +134,41 @@ class NotificationService {
     );
   }
 
+  /// Schedule fortune ready notification
+  Future<void> scheduleFortuneReadyNotification({
+    required String readingId,
+    required int delayMinutes,
+  }) async {
+    final id = readingId.hashCode.abs() % 100000 + 2000; // Unique ID for fortune ready
+    final scheduledTime = DateTime.now().add(Duration(minutes: delayMinutes));
+
+    await _notifications.zonedSchedule(
+      id,
+      'Falınız Hazır! ☕',
+      'Kahve falınız yorumlandı. Hemen görüntülemek için tıklayın.',
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'fortune_ready',
+          'Fal Hazır',
+          channelDescription: 'Fal yorumu hazır bildirimleri',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'fortune:$readingId',
+    );
+  }
+
   /// Cancel daily reminder
   Future<void> cancelDailyReminder() async {
     await _notifications.cancel(1);
