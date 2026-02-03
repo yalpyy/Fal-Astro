@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
-import '../screens/splash/splash_screen.dart';
+import '../screens/landing/landing_page.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/home/home_screen.dart';
@@ -39,8 +39,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnboarded = profileState.isOnboarded;
       final currentPath = state.uri.path;
 
-      // Splash screen - always allow
+      // Landing page - always allow (handles its own navigation)
       if (currentPath == RoutePaths.splash) {
+        return null;
+      }
+
+      // Privacy and Terms pages - always allow (accessible from landing)
+      if (currentPath == RoutePaths.privacyPolicy ||
+          currentPath == RoutePaths.termsOfService) {
         return null;
       }
 
@@ -68,11 +74,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      // Splash
+      // Landing Page (replaces splash)
       GoRoute(
         path: RoutePaths.splash,
         name: RouteNames.splash,
-        builder: (context, state) => const SplashScreen(),
+        builder: (context, state) => const LandingPage(),
       ),
 
       // Auth
