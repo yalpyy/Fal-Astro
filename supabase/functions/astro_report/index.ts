@@ -14,13 +14,12 @@ import {
   wrapPromptForJSON,
   ASTRO_REPORT_JSON_SCHEMA,
 } from '../_shared/schema_validator.ts';
-
-// Zodiac translations
-const ZODIAC_TR: Record<string, string> = {
-  aries: 'Koç', taurus: 'Boğa', gemini: 'İkizler', cancer: 'Yengeç',
-  leo: 'Aslan', virgo: 'Başak', libra: 'Terazi', scorpio: 'Akrep',
-  sagittarius: 'Yay', capricorn: 'Oğlak', aquarius: 'Kova', pisces: 'Balık',
-};
+import {
+  calculateNatalChart,
+  getSunSign,
+  ZODIAC_TR,
+  ZodiacSign,
+} from '../_shared/astrology_calculator.ts';
 
 // Report type prompts
 const REPORT_PROMPTS: Record<string, { tr: string; en: string }> = {
@@ -166,45 +165,92 @@ serve(async (req: Request) => {
       return errorResponse('Birth profile not found. Please complete your profile first.', 404, 'profile_not_found');
     }
 
-    // Calculate zodiac sign and basic chart
+    // Calculate zodiac sign and natal chart using astronomical algorithms
     const birthDate = new Date(birthProfile.birth_date);
-    const zodiacSign = getZodiacSign(birthDate);
+
+    // Parse birth time if available
+    let birthDateTime = birthDate;
+    if (birthProfile.birth_time) {
+      const [hours, minutes] = birthProfile.birth_time.split(':').map(Number);
+      birthDateTime = new Date(birthDate);
+      birthDateTime.setHours(hours || 0, minutes || 0, 0, 0);
+    }
+
+    // Get coordinates from birth location (using approximate coordinates)
+    const latitude = birthProfile.birth_latitude ?? 41.0082; // Default: Istanbul
+    const longitude = birthProfile.birth_longitude ?? 28.9784;
+
+    // Calculate full natal chart using offline astronomical algorithms
+    const natalChart = calculateNatalChart(
+      birthDateTime,
+      birthProfile.birth_time ? latitude : undefined,
+      birthProfile.birth_time ? longitude : undefined,
+      locale === 'tr' ? 'tr' : 'en'
+    );
+
+    const zodiacSign = natalChart.sun.sign;
     const zodiacLabel = locale === 'tr' ? ZODIAC_TR[zodiacSign] : zodiacSign;
 
-    // Simple placeholder chart (real implementation would use ephemeris)
+    // Build chart JSON with real calculated values
     const chartJson = {
-      sun: zodiacSign,
-      moon: 'unknown', // Would be calculated with exact time and location
-      ascendant: 'unknown',
-      mercury: zodiacSign, // Placeholder
-      venus: zodiacSign,
-      mars: zodiacSign,
+      sun: { sign: natalChart.sun.sign, degree: Math.round(natalChart.sun.degree * 10) / 10 },
+      moon: { sign: natalChart.moon.sign, degree: Math.round(natalChart.moon.degree * 10) / 10 },
+      ascendant: natalChart.rising
+        ? { sign: natalChart.rising.sign, degree: Math.round(natalChart.rising.degree * 10) / 10 }
+        : 'unknown',
+      mercury: { sign: natalChart.mercury.sign, degree: Math.round(natalChart.mercury.degree * 10) / 10 },
+      venus: { sign: natalChart.venus.sign, degree: Math.round(natalChart.venus.degree * 10) / 10 },
+      mars: { sign: natalChart.mars.sign, degree: Math.round(natalChart.mars.degree * 10) / 10 },
+      jupiter: { sign: natalChart.jupiter.sign, degree: Math.round(natalChart.jupiter.degree * 10) / 10 },
+      saturn: { sign: natalChart.saturn.sign, degree: Math.round(natalChart.saturn.degree * 10) / 10 },
+      moonPhase: natalChart.moonPhase,
     };
 
     // Prepare prompt
     const reportPrompt = REPORT_PROMPTS[reportType];
     const specificPrompt = locale === 'tr' ? reportPrompt.tr : reportPrompt.en;
 
+    // Build chart description for prompt
+    const moonLabel = locale === 'tr' ? ZODIAC_TR[natalChart.moon.sign] : natalChart.moon.sign;
+    const mercuryLabel = locale === 'tr' ? ZODIAC_TR[natalChart.mercury.sign] : natalChart.mercury.sign;
+    const venusLabel = locale === 'tr' ? ZODIAC_TR[natalChart.venus.sign] : natalChart.venus.sign;
+    const marsLabel = locale === 'tr' ? ZODIAC_TR[natalChart.mars.sign] : natalChart.mars.sign;
+    const risingLabel = natalChart.rising
+      ? (locale === 'tr' ? ZODIAC_TR[natalChart.rising.sign] : natalChart.rising.sign)
+      : null;
+
     const userPrompt =
       locale === 'tr'
         ? `${specificPrompt}
 
 Kişi bilgileri:
-- Güneş burcu: ${zodiacLabel}
+- Güneş burcu: ${zodiacLabel} (${Math.round(natalChart.sun.degree)}°)
+- Ay burcu: ${moonLabel} (${Math.round(natalChart.moon.degree)}°)
+${risingLabel ? `- Yükselen burç: ${risingLabel} (${Math.round(natalChart.rising!.degree)}°)` : '- Yükselen burç: Doğum saati bilinmediği için hesaplanamadı'}
+- Merkür: ${mercuryLabel}
+- Venüs: ${venusLabel}
+- Mars: ${marsLabel}
+- Ay fazı: ${natalChart.moonPhase}
 - Doğum tarihi: ${birthProfile.birth_date}
 - Doğum yeri: ${birthProfile.birth_city}, ${birthProfile.birth_country}
-${birthProfile.birth_time ? `- Doğum saati: ${birthProfile.birth_time}` : '- Doğum saati bilinmiyor'}
+${birthProfile.birth_time ? `- Doğum saati: ${birthProfile.birth_time}` : ''}
 
-Detaylı ve kişiye özel bir rapor hazırla.`
+Bu natal harita verilerine dayanarak detaylı ve kişiye özel bir rapor hazırla.`
         : `${specificPrompt}
 
-Person's info:
-- Sun sign: ${zodiacLabel}
+Person's chart data:
+- Sun sign: ${zodiacLabel} (${Math.round(natalChart.sun.degree)}°)
+- Moon sign: ${moonLabel} (${Math.round(natalChart.moon.degree)}°)
+${risingLabel ? `- Rising sign: ${risingLabel} (${Math.round(natalChart.rising!.degree)}°)` : '- Rising sign: Cannot be calculated without birth time'}
+- Mercury: ${mercuryLabel}
+- Venus: ${venusLabel}
+- Mars: ${marsLabel}
+- Moon phase: ${natalChart.moonPhase}
 - Birth date: ${birthProfile.birth_date}
 - Birth place: ${birthProfile.birth_city}, ${birthProfile.birth_country}
-${birthProfile.birth_time ? `- Birth time: ${birthProfile.birth_time}` : '- Birth time unknown'}
+${birthProfile.birth_time ? `- Birth time: ${birthProfile.birth_time}` : ''}
 
-Prepare a detailed and personalized report.`;
+Based on this natal chart data, prepare a detailed and personalized report.`;
 
     const systemPrompt = locale === 'tr' ? SYSTEM_PROMPT_TR : SYSTEM_PROMPT_EN;
 
@@ -299,22 +345,3 @@ Prepare a detailed and personalized report.`;
     );
   }
 });
-
-// Helper to calculate zodiac sign
-function getZodiacSign(date: Date): string {
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-
-  if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return 'aries';
-  if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return 'taurus';
-  if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return 'gemini';
-  if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return 'cancer';
-  if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return 'leo';
-  if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return 'virgo';
-  if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return 'libra';
-  if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return 'scorpio';
-  if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return 'sagittarius';
-  if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return 'capricorn';
-  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return 'aquarius';
-  return 'pisces';
-}

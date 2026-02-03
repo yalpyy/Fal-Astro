@@ -121,21 +121,18 @@ supabase secrets set FIREBASE_SERVER_KEY=your-server-key
 
 ---
 
-### 8. Astroloji Hesaplamaları
+### 8. ~~Astroloji Hesaplamaları~~ ✅ TAMAMLANDI
 
-**Dosya:** `supabase/functions/astro_report/index.ts`
+**Dosya:** `flutter_app/lib/core/services/astrology_calculator.dart` ve `supabase/functions/_shared/astrology_calculator.ts`
 
-```typescript
-// Satır 174: Placeholder değerler
-moon: 'unknown',
-ascendant: 'unknown',
-// Mercury, Venus, Mars hepsi güneş burcuna default
-```
-
-**Yapılacaklar:**
-- [ ] Ephemeris kütüphanesi veya API entegrasyonu
-- [ ] Gerçek gezegen pozisyonları hesaplama
-- [ ] Yükselen burç hesaplama (doğum saati gerekli)
+Jean Meeus'un "Astronomical Algorithms" kitabına dayalı offline hesaplama sistemi eklendi:
+- ✅ Güneş pozisyonu (güneş burcu)
+- ✅ Ay pozisyonu (ay burcu)
+- ✅ Ay fazı hesaplama
+- ✅ Gezegen pozisyonları (Merkür, Venüs, Mars, Jüpiter, Satürn)
+- ✅ Yükselen burç hesaplama (doğum saati ve koordinat gerekli)
+- ✅ Natal harita oluşturma
+- ✅ Burç uyumu hesaplama
 
 ---
 
