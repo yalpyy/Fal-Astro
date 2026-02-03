@@ -124,6 +124,15 @@ class ProfileScreen extends ConsumerWidget {
           _SettingsSection(
             title: 'Ayarlar',
             children: [
+              // All Settings
+              ListTile(
+                leading: const Icon(Icons.settings),
+                title: const Text('Tüm Ayarlar'),
+                subtitle: const Text('Ses, bildirimler, dil ve daha fazlası'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.pushNamed(RouteNames.settings),
+              ),
+
               // Theme
               ListTile(
                 leading: const Icon(Icons.dark_mode),

@@ -31,6 +31,7 @@ class RouteNames {
 
   // Settings
   static const String settings = 'settings';
+  static const String creditHistory = 'credit-history';
   static const String languageSettings = 'language-settings';
   static const String themeSettings = 'theme-settings';
   static const String notificationSettings = 'notification-settings';
@@ -82,6 +83,7 @@ class RoutePaths {
 
   // Settings
   static const String settings = '/settings';
+  static const String creditHistory = '/settings/credit-history';
   static const String languageSettings = '/settings/language';
   static const String themeSettings = '/settings/theme';
   static const String notificationSettings = '/settings/notifications';

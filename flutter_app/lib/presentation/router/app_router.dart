@@ -24,6 +24,8 @@ import '../screens/profile/notification_settings_screen.dart';
 import '../screens/profile/privacy_policy_screen.dart';
 import '../screens/profile/terms_screen.dart';
 import '../screens/profile/about_screen.dart';
+import '../screens/settings/settings_screen.dart';
+import '../screens/settings/credit_history_screen.dart';
 import 'route_names.dart';
 
 /// Router provider
@@ -223,6 +225,18 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.admin,
         name: RouteNames.admin,
         builder: (context, state) => const AdminPanelScreen(),
+      ),
+
+      // Settings
+      GoRoute(
+        path: RoutePaths.settings,
+        name: RouteNames.settings,
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.creditHistory,
+        name: RouteNames.creditHistory,
+        builder: (context, state) => const CreditHistoryScreen(),
       ),
 
       // Profile sub-screens
