@@ -92,6 +92,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: pickedFile.path,
       aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      cropStyle: CropStyle.circle,
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: 'Fotoğrafı Kırp',
@@ -99,14 +100,12 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
           toolbarWidgetColor: Colors.white,
           initAspectRatio: CropAspectRatioPreset.square,
           lockAspectRatio: true,
-          cropStyle: CropStyle.circle,
           showCropGrid: false,
         ),
         IOSUiSettings(
           title: 'Fotoğrafı Kırp',
           aspectRatioLockEnabled: true,
           resetAspectRatioEnabled: false,
-          cropStyle: CropStyle.circle,
         ),
       ],
     );
@@ -220,7 +219,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                     style: TextStyle(
                       color: _hasChanges
                           ? colorScheme.primary
-                          : colorScheme.onSurface.withValues(alpha: 0.5),
+                          : colorScheme.onSurface.withOpacity(0.5),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -247,15 +246,15 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
                           colors: [
-                            colorScheme.primary.withValues(alpha: 0.3),
-                            colorScheme.secondary.withValues(alpha: 0.3),
+                            colorScheme.primary.withOpacity(0.3),
+                            colorScheme.secondary.withOpacity(0.3),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: colorScheme.primary.withValues(alpha: 0.2),
+                            color: colorScheme.primary.withOpacity(0.2),
                             blurRadius: 20,
                             spreadRadius: 2,
                           ),
@@ -273,7 +272,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                             ? Icon(
                                 Icons.person,
                                 size: 60,
-                                color: colorScheme.primary.withValues(alpha: 0.7),
+                                color: colorScheme.primary.withOpacity(0.7),
                               )
                             : null,
                       ),
@@ -297,7 +296,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
+                              color: Colors.black.withOpacity(0.2),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -319,7 +318,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
               child: Text(
                 'Fotoğrafı değiştirmek için tıklayın',
                 style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ),
@@ -426,7 +425,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
         hintText: hint,
         prefixIcon: Icon(icon),
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -434,7 +433,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.2),
+            color: colorScheme.outline.withOpacity(0.2),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -468,10 +467,10 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: colorScheme.outline.withValues(alpha: 0.2),
+            color: colorScheme.outline.withOpacity(0.2),
           ),
         ),
         child: Row(
@@ -497,7 +496,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: value != null
                               ? colorScheme.onSurface
-                              : colorScheme.onSurface.withValues(alpha: 0.5),
+                              : colorScheme.onSurface.withOpacity(0.5),
                         ),
                   ),
                 ],
@@ -543,19 +542,19 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
               color: isSelected
-                  ? colorScheme.primary.withValues(alpha: 0.15)
-                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  ? colorScheme.primary.withOpacity(0.15)
+                  : colorScheme.surfaceContainerHighest.withOpacity(0.5),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isSelected
                     ? colorScheme.primary
-                    : colorScheme.outline.withValues(alpha: 0.2),
+                    : colorScheme.outline.withOpacity(0.2),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: colorScheme.primary.withValues(alpha: 0.2),
+                        color: colorScheme.primary.withOpacity(0.2),
                         blurRadius: 8,
                         spreadRadius: 1,
                       ),

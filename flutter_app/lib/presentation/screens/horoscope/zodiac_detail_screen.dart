@@ -93,7 +93,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white.withOpacity(0.9),
                   ),
                 ),
               ),
@@ -138,7 +138,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                 color: const Color(0xFF1A1A2E),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: Colors.white.withOpacity(0.1),
                 ),
               ),
               child: const Icon(
@@ -158,7 +158,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                 color: const Color(0xFF1A1A2E),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: Colors.white.withOpacity(0.15),
                 ),
               ),
               child: Row(
@@ -180,7 +180,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                   const SizedBox(width: 8),
                   Icon(
                     Icons.keyboard_arrow_down,
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withOpacity(0.7),
                     size: 20,
                   ),
                 ],
@@ -209,7 +209,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.3),
+                  color: Colors.white.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -244,13 +244,13 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? sign.primaryColor.withValues(alpha: 0.3)
-                              : Colors.white.withValues(alpha: 0.05),
+                              ? sign.primaryColor.withOpacity(0.3)
+                              : Colors.white.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isSelected
                                 ? sign.primaryColor
-                                : Colors.white.withValues(alpha: 0.1),
+                                : Colors.white.withOpacity(0.1),
                             width: isSelected ? 2 : 1,
                           ),
                         ),
@@ -265,7 +265,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                             Text(
                               sign.name,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
+                                color: Colors.white.withOpacity(0.9),
                                 fontSize: 11,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               ),
@@ -302,19 +302,19 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? Colors.white.withValues(alpha: 0.15)
+                      ? Colors.white.withOpacity(0.15)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? Colors.white.withValues(alpha: 0.3)
+                        ? Colors.white.withOpacity(0.3)
                         : Colors.transparent,
                   ),
                 ),
                 child: Text(
                   period.label,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                    color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
@@ -363,7 +363,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
           Text(
             'Reklam',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.4),
+              color: Colors.white.withOpacity(0.4),
               fontSize: 12,
             ),
           ),
@@ -409,7 +409,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
         color: const Color(0xFF1A1A2E),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
+          color: Colors.white.withOpacity(0.1),
         ),
       ),
       child: Column(
@@ -418,7 +418,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
           Text(
             'Skorlar',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: Colors.white.withOpacity(0.9),
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -474,7 +474,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.15),
+            color: iconColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: iconColor, size: 20),
@@ -487,7 +487,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
           child: Text(
             label,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
+              color: Colors.white.withOpacity(0.8),
               fontSize: 14,
             ),
           ),
@@ -513,7 +513,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
             child: LinearProgressIndicator(
               value: score / 10,
               minHeight: 8,
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              backgroundColor: Colors.white.withOpacity(0.1),
               valueColor: AlwaysStoppedAnimation(barColor),
             ),
           ),
@@ -531,7 +531,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
           color: const Color(0xFF1A1A2E),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: Colors.white.withOpacity(0.1),
           ),
         ),
         child: Row(
@@ -542,8 +542,8 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
               height: 40,
               decoration: BoxDecoration(
                 color: _isSpeaking
-                    ? Colors.red.withValues(alpha: 0.2)
-                    : Colors.white.withValues(alpha: 0.1),
+                    ? Colors.red.withOpacity(0.2)
+                    : Colors.white.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -567,7 +567,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                 Text(
                   '~$duration saniye',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: Colors.white.withOpacity(0.5),
                     fontSize: 12,
                   ),
                 ),
@@ -591,7 +591,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
           colors: [
             Colors.white,
             Colors.white,
-            Colors.white.withValues(alpha: 0.0),
+            Colors.white.withOpacity(0.0),
           ],
           stops: const [0.0, 0.7, 1.0],
         ).createShader(bounds);
@@ -600,7 +600,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
       child: Text(
         displayText,
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.8),
+          color: Colors.white.withOpacity(0.8),
           fontSize: 16,
           height: 1.6,
         ),
@@ -621,7 +621,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+            color: const Color(0xFF7C3AED).withOpacity(0.4),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -688,7 +688,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.3),
+                          color: Colors.white.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -746,7 +746,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
                             Text(
                               horoscope.horoscopeText,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.85),
+                                color: Colors.white.withOpacity(0.85),
                                 fontSize: 16,
                                 height: 1.8,
                               ),
@@ -774,10 +774,10 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: Colors.white.withOpacity(0.1),
           ),
         ),
         child: Column(
@@ -787,7 +787,7 @@ class _ZodiacDetailScreenState extends ConsumerState<ZodiacDetailScreen> {
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
+                color: Colors.white.withOpacity(0.5),
                 fontSize: 10,
               ),
             ),
@@ -817,11 +817,11 @@ class _ConstellationPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.7)
+      ..color = Colors.white.withOpacity(0.7)
       ..style = PaintingStyle.fill;
 
     final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.3)
+      ..color = Colors.white.withOpacity(0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -839,7 +839,7 @@ class _ConstellationPainter extends CustomPainter {
       canvas.drawCircle(
         point,
         6,
-        Paint()..color = Colors.white.withValues(alpha: 0.1),
+        Paint()..color = Colors.white.withOpacity(0.1),
       );
       // Inner dot
       canvas.drawCircle(point, 3, paint);
