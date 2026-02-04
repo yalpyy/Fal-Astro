@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/premium_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
@@ -9,6 +10,7 @@ import '../../providers/astro_provider.dart';
 import '../../router/route_names.dart';
 import '../../widgets/common/disclaimer_banner.dart';
 import '../../widgets/gamification/user_stats_card.dart';
+import '../../widgets/premium/native_ad_card.dart';
 import 'widgets/fortune_card.dart';
 import 'widgets/astro_card.dart';
 import 'widgets/daily_affirmation_card.dart';
@@ -19,7 +21,7 @@ final dailyAstroHomeProvider = FutureProvider<void>((ref) async {
   await notifier.loadDailyAstro();
 });
 
-/// Home screen
+/// Home screen with premium mystical design
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -28,7 +30,6 @@ class HomeScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final profileState = ref.watch(profileProvider);
     final dailyAstroState = ref.watch(dailyAstroProvider);
-    final colorScheme = Theme.of(context).colorScheme;
 
     // Debug banner for web
     if (kDebugMode || kIsWeb) {
@@ -41,135 +42,71 @@ class HomeScreen extends ConsumerWidget {
     final zodiacLabel = zodiacSign != null
         ? Formatters.zodiacLabel(zodiacSign)
         : null;
+    final userName = profileState.profile?.name;
 
     return Scaffold(
+      backgroundColor: PremiumColors.backgroundDark,
       body: SafeArea(
         child: RefreshIndicator(
+          color: PremiumColors.primaryPurple,
+          backgroundColor: PremiumColors.cardBackground,
           onRefresh: () async {
             await ref.read(dailyAstroProvider.notifier).loadDailyAstro(
                   forceRefresh: true,
                 );
           },
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(PremiumSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Debug: Auth status banner (only on web)
                 if (kIsWeb)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: authState.isAuthenticated
-                          ? Colors.green.shade100
-                          : Colors.red.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          authState.isAuthenticated
-                              ? Icons.check_circle
-                              : Icons.error,
-                          color: authState.isAuthenticated
-                              ? Colors.green
-                              : Colors.red,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            authState.isAuthenticated
-                                ? 'Giriş yapıldı: ${authState.user?.email ?? "?"}'
-                                : 'Giriş yapılmadı! Status: ${authState.status.name}',
-                            style: TextStyle(
-                              color: authState.isAuthenticated
-                                  ? Colors.green.shade800
-                                  : Colors.red.shade800,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _DebugBanner(authState: authState),
 
-                // Header
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Merhaba${profileState.profile?.name != null ? ", ${profileState.profile!.name}" : ""}',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          if (zodiacLabel != null)
-                            Text(
-                              zodiacLabel,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: colorScheme.primary,
-                                  ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: colorScheme.primaryContainer,
-                      child: Icon(
-                        Icons.person,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                  ],
+                // Premium Header
+                _PremiumHeader(
+                  userName: userName,
+                  zodiacLabel: zodiacLabel,
+                  avatarUrl: profileState.profile?.avatarUrl,
+                  onProfileTap: () => context.pushNamed(RouteNames.profile),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: PremiumSpacing.xl),
 
                 // User Stats (Credits, Streak, Level)
                 UserStatsCard(
                   onCreditsTap: () => context.pushNamed(RouteNames.shop),
                   onAchievementsTap: () => context.pushNamed(RouteNames.achievements),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: PremiumSpacing.lg),
 
                 // Daily Affirmation
                 if (zodiacSign != null)
                   DailyAffirmationCard(zodiacSign: zodiacSign),
-                const SizedBox(height: 16),
+                const SizedBox(height: PremiumSpacing.lg),
 
                 // Disclaimer
                 const DisclaimerBanner(),
-                const SizedBox(height: 24),
+                const SizedBox(height: PremiumSpacing.xl),
 
-                // Main cards
-                Text(
-                  'Bugün Ne Yapmak İstersin?',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                // Section: Main Features
+                const _SectionTitle(
+                  title: 'Keşfet',
+                  subtitle: 'Bugün ruhun ne diyor?',
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: PremiumSpacing.lg),
 
                 // Fortune Card
                 FortuneCard(
                   onTap: () => context.pushNamed(RouteNames.fortuneUpload),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: PremiumSpacing.md),
 
                 // Dreams Card
-                _FeatureCard(
-                  icon: Icons.nightlight_round,
-                  title: 'Rüya Yorumu',
-                  subtitle: 'Rüyalarının anlamını keşfet',
-                  color: Colors.indigo,
+                DreamsCard(
                   onTap: () => context.pushNamed(RouteNames.dreams),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: PremiumSpacing.md),
 
                 // Daily Astro Card
                 AstroCard(
@@ -184,56 +121,63 @@ class HomeScreen extends ConsumerWidget {
                         forceRefresh: true,
                       ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: PremiumSpacing.xl),
 
-                // Quick actions
-                Text(
-                  'Raporlar',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                // Inline Ad (Native style)
+                const InlineScrollAd(
+                  title: 'Astroloji Uygulaması',
+                  subtitle: 'Burçları keşfedin',
+                  imageUrl: null,
+                  onTap: null,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: PremiumSpacing.xl),
+
+                // Section: Reports
+                const _SectionTitle(
+                  title: 'Raporlar',
+                  subtitle: 'Derinlemesine analizler',
+                ),
+                const SizedBox(height: PremiumSpacing.lg),
 
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.5,
+                  mainAxisSpacing: PremiumSpacing.md,
+                  crossAxisSpacing: PremiumSpacing.md,
+                  childAspectRatio: 1.4,
                   children: [
-                    _ReportTile(
-                      icon: Icons.auto_awesome,
+                    _PremiumReportTile(
+                      icon: '🌌',
                       title: 'Doğum Haritası',
-                      color: Colors.purple,
+                      color: PremiumColors.primaryPurple,
                       onTap: () => context.pushNamed(
                         RouteNames.astroReport,
                         queryParameters: {'type': 'natal'},
                       ),
                     ),
-                    _ReportTile(
-                      icon: Icons.favorite,
+                    _PremiumReportTile(
+                      icon: '💕',
                       title: 'Aşk',
-                      color: Colors.pink,
+                      color: PremiumColors.energyLove,
                       onTap: () => context.pushNamed(
                         RouteNames.astroReport,
                         queryParameters: {'type': 'love'},
                       ),
                     ),
-                    _ReportTile(
-                      icon: Icons.work,
+                    _PremiumReportTile(
+                      icon: '💼',
                       title: 'Kariyer',
-                      color: Colors.blue,
+                      color: PremiumColors.energyCareer,
                       onTap: () => context.pushNamed(
                         RouteNames.astroReport,
                         queryParameters: {'type': 'career'},
                       ),
                     ),
-                    _ReportTile(
-                      icon: Icons.calendar_month,
+                    _PremiumReportTile(
+                      icon: '📅',
                       title: 'Bu Ay',
-                      color: Colors.teal,
+                      color: PremiumColors.accentCyan,
                       onTap: () => context.pushNamed(
                         RouteNames.astroReport,
                         queryParameters: {'type': 'monthly'},
@@ -241,6 +185,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: PremiumSpacing.xl),
               ],
             ),
           ),
@@ -250,118 +195,262 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _ReportTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final Color color;
-  final VoidCallback onTap;
+/// Premium header with mystical greeting
+class _PremiumHeader extends StatelessWidget {
+  final String? userName;
+  final String? zodiacLabel;
+  final String? avatarUrl;
+  final VoidCallback onProfileTap;
 
-  const _ReportTile({
-    required this.icon,
-    required this.title,
-    required this.color,
-    required this.onTap,
+  const _PremiumHeader({
+    this.userName,
+    this.zodiacLabel,
+    this.avatarUrl,
+    required this.onProfileTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+    return Row(
+      children: [
+        Expanded(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, color: color, size: 32),
-              const SizedBox(height: 8),
               Text(
-                title,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                _getGreeting(),
+                style: TextStyle(
+                  color: PremiumColors.textTertiary,
+                  fontSize: 14,
+                ),
               ),
+              const SizedBox(height: PremiumSpacing.xs),
+              Text(
+                userName != null ? 'Merhaba, $userName' : MysticalStrings.greeting,
+                style: const TextStyle(
+                  color: PremiumColors.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              if (zodiacLabel != null) ...[
+                const SizedBox(height: PremiumSpacing.xs),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: PremiumSpacing.md,
+                    vertical: PremiumSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        PremiumColors.primaryPurple.withOpacity(0.2),
+                        PremiumColors.accentCyan.withOpacity(0.1),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(PremiumRadius.full),
+                    border: Border.all(
+                      color: PremiumColors.primaryPurple.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Text(
+                    zodiacLabel!,
+                    style: const TextStyle(
+                      color: PremiumColors.primaryPurple,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
-      ),
+        // Profile avatar
+        GestureDetector(
+          onTap: onProfileTap,
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  PremiumColors.primaryPurple,
+                  PremiumColors.accentCyan,
+                ],
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 26,
+              backgroundColor: PremiumColors.cardBackground,
+              backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+              child: avatarUrl == null
+                  ? const Text(
+                      '🌙',
+                      style: TextStyle(fontSize: 24),
+                    )
+                  : null,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 6) return 'Gece kuşu';
+    if (hour < 12) return 'Günaydın';
+    if (hour < 18) return 'İyi günler';
+    return 'İyi akşamlar';
+  }
+}
+
+/// Section title with subtitle
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+
+  const _SectionTitle({
+    required this.title,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: PremiumColors.textPrimary,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.3,
+          ),
+        ),
+        if (subtitle != null)
+          Text(
+            subtitle!,
+            style: TextStyle(
+              color: PremiumColors.textTertiary,
+              fontSize: 13,
+            ),
+          ),
+      ],
     );
   }
 }
 
-class _FeatureCard extends StatelessWidget {
-  final IconData icon;
+/// Premium styled report tile
+class _PremiumReportTile extends StatelessWidget {
+  final String icon;
   final String title;
-  final String subtitle;
   final Color color;
   final VoidCallback onTap;
 
-  const _FeatureCard({
+  const _PremiumReportTile({
     required this.icon,
     required this.title,
-    required this.subtitle,
     required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.05),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurface.withOpacity(0.7),
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: colorScheme.onSurface.withOpacity(0.5),
-              ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(PremiumSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withOpacity(0.15),
+              color.withOpacity(0.05),
             ],
           ),
+          borderRadius: BorderRadius.circular(PremiumRadius.xl),
+          border: Border.all(
+            color: color.withOpacity(0.2),
+            width: 1,
+          ),
         ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              icon,
+              style: const TextStyle(fontSize: 32),
+            ),
+            const SizedBox(height: PremiumSpacing.sm),
+            Text(
+              title,
+              style: const TextStyle(
+                color: PremiumColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Debug banner for web testing
+class _DebugBanner extends StatelessWidget {
+  final dynamic authState;
+
+  const _DebugBanner({required this.authState});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(PremiumSpacing.sm),
+      margin: const EdgeInsets.only(bottom: PremiumSpacing.lg),
+      decoration: BoxDecoration(
+        color: authState.isAuthenticated
+            ? Colors.green.withOpacity(0.2)
+            : Colors.red.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(PremiumRadius.md),
+        border: Border.all(
+          color: authState.isAuthenticated
+              ? Colors.green.withOpacity(0.5)
+              : Colors.red.withOpacity(0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            authState.isAuthenticated
+                ? Icons.check_circle
+                : Icons.error,
+            color: authState.isAuthenticated
+                ? Colors.green
+                : Colors.red,
+            size: 20,
+          ),
+          const SizedBox(width: PremiumSpacing.sm),
+          Expanded(
+            child: Text(
+              authState.isAuthenticated
+                  ? 'Giriş yapıldı: ${authState.user?.email ?? "?"}'
+                  : 'Giriş yapılmadı! Status: ${authState.status.name}',
+              style: TextStyle(
+                color: authState.isAuthenticated
+                    ? Colors.green
+                    : Colors.red,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
