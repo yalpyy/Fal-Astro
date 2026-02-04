@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/premium_theme.dart';
 import '../../../core/services/ad_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
@@ -18,7 +19,7 @@ final creditPackagesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) 
   return List<Map<String, dynamic>>.from(response);
 });
 
-/// Shop screen for purchasing credits
+/// Premium shop screen for purchasing credits
 class ShopScreen extends ConsumerWidget {
   const ShopScreen({super.key});
 
@@ -26,174 +27,77 @@ class ShopScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final packagesAsync = ref.watch(creditPackagesProvider);
     final profileState = ref.watch(profileProvider);
-    final colorScheme = Theme.of(context).colorScheme;
     final currentCredits = profileState.profile?.credits ?? 0;
 
     return Scaffold(
+      backgroundColor: PremiumColors.backgroundDark,
       appBar: AppBar(
-        title: const Text('Kredi Mağazası'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'Kredi Mağazası',
+          style: TextStyle(
+            color: PremiumColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: PremiumColors.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(PremiumSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Current credits card
-            Card(
-              color: colorScheme.primaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.monetization_on,
-                      size: 48,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Mevcut Kredin',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: colorScheme.onPrimaryContainer,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$currentCredits',
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
+            // Current credits card with gold glow
+            _PremiumCreditsCard(credits: currentCredits),
+            const SizedBox(height: PremiumSpacing.xl),
 
             // How credits work
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, color: colorScheme.primary),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Krediler Nasıl Çalışır?',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _CreditUsageRow(
-                      icon: Icons.coffee,
-                      feature: 'Kahve Falı',
-                      credits: 1,
-                    ),
-                    _CreditUsageRow(
-                      icon: Icons.nightlight_round,
-                      feature: 'Rüya Yorumu',
-                      credits: 1,
-                    ),
-                    _CreditUsageRow(
-                      icon: Icons.favorite,
-                      feature: 'Burç Uyumu',
-                      credits: 3,
-                    ),
-                    _CreditUsageRow(
-                      icon: Icons.auto_awesome,
-                      feature: 'Astroloji Raporu',
-                      credits: 2,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
+            _HowCreditsWorkCard(),
+            const SizedBox(height: PremiumSpacing.xl),
 
             // Credit packages
-            Text(
+            const Text(
               'Kredi Paketleri',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: TextStyle(
+                color: PremiumColors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: PremiumSpacing.lg),
 
             packagesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(
+                child: CircularProgressIndicator(
+                  color: PremiumColors.premiumGold,
+                ),
+              ),
               error: (e, _) => Center(
-                child: Text('Hata: $e'),
+                child: Text(
+                  'Hata: $e',
+                  style: TextStyle(color: PremiumColors.error),
+                ),
               ),
               data: (packages) => Column(
-                children: packages.map((pkg) => _CreditPackageCard(
+                children: packages.map((pkg) => _PremiumPackageCard(
                   package: pkg,
                   onPurchase: () => _handlePurchase(context, pkg),
                 )).toList(),
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: PremiumSpacing.xl),
 
             // Watch ads for credits
-            Card(
-              color: colorScheme.tertiaryContainer,
-              child: InkWell(
-                onTap: () => _showAdRewardDialog(context, ref),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.tertiary.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.play_circle_filled,
-                          color: colorScheme.tertiary,
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Ücretsiz Kredi Kazan!',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onTertiaryContainer,
-                                  ),
-                            ),
-                            Text(
-                              'Reklam izle, 1 kredi kazan',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: colorScheme.onTertiaryContainer.withOpacity(0.8),
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right,
-                        color: colorScheme.onTertiaryContainer,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            _WatchAdCard(
+              onTap: () => _showAdRewardDialog(context, ref),
             ),
+            const SizedBox(height: PremiumSpacing.xl),
           ],
         ),
       ),
@@ -203,19 +107,60 @@ class ShopScreen extends ConsumerWidget {
   void _handlePurchase(BuildContext context, Map<String, dynamic> package) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(package['name_tr']),
-        content: Text(
-          'Bu paket yakında satın alınabilir olacak.\n\n'
-          '${package['credits']} kredi + ${package['bonus_credits']} bonus\n'
-          'Fiyat: ${package['price_try']} ₺',
+      builder: (context) => Dialog(
+        backgroundColor: PremiumColors.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(PremiumRadius.xl),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Tamam'),
+        child: Padding(
+          padding: const EdgeInsets.all(PremiumSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('💎', style: TextStyle(fontSize: 48)),
+              const SizedBox(height: PremiumSpacing.lg),
+              Text(
+                package['name_tr'],
+                style: const TextStyle(
+                  color: PremiumColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: PremiumSpacing.md),
+              Text(
+                'Bu paket yakında satın alınabilir olacak.\n\n'
+                '${package['credits']} kredi + ${package['bonus_credits']} bonus\n'
+                'Fiyat: ${package['price_try']} ₺',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: PremiumColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: PremiumSpacing.xl),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(PremiumSpacing.md),
+                  decoration: BoxDecoration(
+                    color: PremiumColors.primaryPurple,
+                    borderRadius: BorderRadius.circular(PremiumRadius.lg),
+                  ),
+                  child: const Text(
+                    'Tamam',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -224,129 +169,339 @@ class ShopScreen extends ConsumerWidget {
     final adService = AdService.instance;
 
     if (!adService.isRewardedAdReady) {
-      // Ad not ready, show message
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Reklam Hazırlanıyor'),
-          content: const Text(
-            'Reklam yükleniyor, lütfen birkaç saniye sonra tekrar deneyin.',
+        builder: (context) => Dialog(
+          backgroundColor: PremiumColors.cardBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(PremiumRadius.xl),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tamam'),
+          child: Padding(
+            padding: const EdgeInsets.all(PremiumSpacing.xl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('⏳', style: TextStyle(fontSize: 48)),
+                const SizedBox(height: PremiumSpacing.lg),
+                const Text(
+                  'Reklam Hazırlanıyor',
+                  style: TextStyle(
+                    color: PremiumColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: PremiumSpacing.sm),
+                Text(
+                  'Lütfen birkaç saniye sonra tekrar deneyin.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: PremiumColors.textSecondary),
+                ),
+                const SizedBox(height: PremiumSpacing.xl),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: PremiumSpacing.xl,
+                      vertical: PremiumSpacing.md,
+                    ),
+                    decoration: BoxDecoration(
+                      color: PremiumColors.surfaceLight,
+                      borderRadius: BorderRadius.circular(PremiumRadius.lg),
+                    ),
+                    child: const Text(
+                      'Tamam',
+                      style: TextStyle(color: PremiumColors.textPrimary),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
       return;
     }
 
-    // Show confirmation dialog
     final shouldWatch = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.play_circle_filled, size: 48),
-        title: const Text('Reklam İzle'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Kısa bir video reklam izleyerek 1 kredi kazanabilirsin!',
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.monetization_on, color: Colors.amber),
-                SizedBox(width: 8),
-                Text(
-                  '+1 Kredi',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+      builder: (context) => Dialog(
+        backgroundColor: PremiumColors.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(PremiumRadius.xl),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(PremiumSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(PremiumSpacing.lg),
+                decoration: BoxDecoration(
+                  color: PremiumColors.primaryPurple.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Text('🎬', style: TextStyle(fontSize: 40)),
+              ),
+              const SizedBox(height: PremiumSpacing.lg),
+              const Text(
+                'Reklam İzle',
+                style: TextStyle(
+                  color: PremiumColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: PremiumSpacing.md),
+              Text(
+                'Kısa bir video reklam izleyerek 1 kredi kazanabilirsin!',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: PremiumColors.textSecondary),
+              ),
+              const SizedBox(height: PremiumSpacing.lg),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: PremiumSpacing.lg,
+                  vertical: PremiumSpacing.md,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      PremiumColors.premiumGold.withOpacity(0.2),
+                      PremiumColors.premiumGold.withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(PremiumRadius.full),
+                  border: Border.all(
+                    color: PremiumColors.premiumGold.withOpacity(0.3),
                   ),
                 ),
-              ],
-            ),
-          ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('💎', style: TextStyle(fontSize: 20)),
+                    const SizedBox(width: PremiumSpacing.sm),
+                    Text(
+                      '+1 Kredi',
+                      style: TextStyle(
+                        color: PremiumColors.premiumGold,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: PremiumSpacing.xl),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context, false),
+                      child: Container(
+                        padding: const EdgeInsets.all(PremiumSpacing.md),
+                        decoration: BoxDecoration(
+                          color: PremiumColors.surfaceLight,
+                          borderRadius: BorderRadius.circular(PremiumRadius.lg),
+                        ),
+                        child: const Text(
+                          'Vazgeç',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: PremiumColors.textSecondary),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: PremiumSpacing.md),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context, true),
+                      child: Container(
+                        padding: const EdgeInsets.all(PremiumSpacing.md),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              PremiumColors.primaryPurple,
+                              PremiumColors.primaryPurpleDark,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(PremiumRadius.lg),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.play_arrow, color: Colors.white, size: 20),
+                            SizedBox(width: PremiumSpacing.xs),
+                            Text(
+                              'İzle',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Vazgeç'),
-          ),
-          FilledButton.icon(
-            onPressed: () => Navigator.pop(context, true),
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('İzle'),
-          ),
-        ],
       ),
     );
 
     if (shouldWatch != true || !context.mounted) return;
 
-    // Show the ad
     final reward = await adService.showRewardedAd();
 
     if (!context.mounted) return;
 
     if (reward != null && reward > 0) {
-      // Add credits to user's account
       final supabase = ref.read(safeSupabaseClientProvider);
       if (supabase != null) {
         try {
-          // Call RPC to add credits
           await supabase.rpc('add_user_credits', params: {
             'credit_amount': 1,
             'transaction_type': 'ad_reward',
             'description': 'Reklam izleme ödülü',
           });
 
-          // Refresh profile to update credits
           ref.invalidate(profileProvider);
 
-          // Show success
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
+              SnackBar(
+                content: const Row(
                   children: [
-                    Icon(Icons.check_circle, color: Colors.white),
+                    Text('💎', style: TextStyle(fontSize: 20)),
                     SizedBox(width: 8),
                     Text('1 kredi kazandın!'),
                   ],
                 ),
-                backgroundColor: Colors.green,
+                backgroundColor: PremiumColors.success,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(PremiumRadius.md),
+                ),
               ),
             );
           }
         } catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Kredi eklenirken hata: $e')),
+              SnackBar(
+                content: Text('Kredi eklenirken hata: $e'),
+                backgroundColor: PremiumColors.error,
+              ),
             );
           }
         }
-      }
-    } else {
-      // Ad was cancelled or failed
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Reklam tamamlanmadı, kredi verilmedi.'),
-          ),
-        );
       }
     }
   }
 }
 
+/// Premium credits display card
+class _PremiumCreditsCard extends StatelessWidget {
+  final int credits;
+
+  const _PremiumCreditsCard({required this.credits});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(PremiumSpacing.xl),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            PremiumColors.premiumGold.withOpacity(0.2),
+            PremiumColors.premiumGoldDark.withOpacity(0.1),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(PremiumRadius.xl),
+        border: Border.all(
+          color: PremiumColors.premiumGold.withOpacity(0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: PremiumColors.premiumGold.withOpacity(0.2),
+            blurRadius: 24,
+            spreadRadius: 4,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Text('💎', style: TextStyle(fontSize: 48)),
+          const SizedBox(height: PremiumSpacing.md),
+          Text(
+            'Mevcut Kredin',
+            style: TextStyle(
+              color: PremiumColors.textSecondary,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: PremiumSpacing.xs),
+          Text(
+            '$credits',
+            style: TextStyle(
+              color: PremiumColors.premiumGold,
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// How credits work card
+class _HowCreditsWorkCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(PremiumSpacing.lg),
+      decoration: BoxDecoration(
+        color: PremiumColors.cardBackground,
+        borderRadius: BorderRadius.circular(PremiumRadius.xl),
+        border: Border.all(color: PremiumColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('ℹ️', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: PremiumSpacing.sm),
+              const Text(
+                'Krediler Nasıl Çalışır?',
+                style: TextStyle(
+                  color: PremiumColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: PremiumSpacing.lg),
+          _CreditUsageRow(icon: '☕', feature: 'Kahve Falı', credits: 1),
+          _CreditUsageRow(icon: '🌙', feature: 'Rüya Yorumu', credits: 1),
+          _CreditUsageRow(icon: '💕', feature: 'Burç Uyumu', credits: 3),
+          _CreditUsageRow(icon: '✨', feature: 'Astroloji Raporu', credits: 2),
+        ],
+      ),
+    );
+  }
+}
+
+/// Credit usage row
 class _CreditUsageRow extends StatelessWidget {
-  final IconData icon;
+  final String icon;
   final String feature;
   final int credits;
 
@@ -359,23 +514,36 @@ class _CreditUsageRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: PremiumSpacing.sm),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey),
-          const SizedBox(width: 12),
-          Expanded(child: Text(feature)),
+          Text(icon, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: PremiumSpacing.md),
+          Expanded(
+            child: Text(
+              feature,
+              style: TextStyle(
+                color: PremiumColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+          ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(
+              horizontal: PremiumSpacing.md,
+              vertical: PremiumSpacing.xs,
+            ),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
+              color: PremiumColors.primaryPurple.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(PremiumRadius.full),
             ),
             child: Text(
               '$credits kredi',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: const TextStyle(
+                color: PremiumColors.primaryPurple,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -384,62 +552,92 @@ class _CreditUsageRow extends StatelessWidget {
   }
 }
 
-class _CreditPackageCard extends StatelessWidget {
+/// Premium package card
+class _PremiumPackageCard extends StatelessWidget {
   final Map<String, dynamic> package;
   final VoidCallback onPurchase;
 
-  const _CreditPackageCard({
+  const _PremiumPackageCard({
     required this.package,
     required this.onPurchase,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final isPopular = package['is_popular'] == true;
     final credits = package['credits'] as int;
     final bonusCredits = package['bonus_credits'] as int? ?? 0;
     final totalCredits = credits + bonusCredits;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Stack(
-        children: [
-          InkWell(
-            onTap: onPurchase,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+    return GestureDetector(
+      onTap: onPurchase,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: PremiumSpacing.md),
+        decoration: BoxDecoration(
+          gradient: isPopular
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    PremiumColors.premiumGold.withOpacity(0.15),
+                    PremiumColors.premiumGold.withOpacity(0.05),
+                  ],
+                )
+              : null,
+          color: isPopular ? null : PremiumColors.cardBackground,
+          borderRadius: BorderRadius.circular(PremiumRadius.xl),
+          border: Border.all(
+            color: isPopular
+                ? PremiumColors.premiumGold.withOpacity(0.3)
+                : PremiumColors.borderSubtle,
+          ),
+          boxShadow: isPopular
+              ? [
+                  BoxShadow(
+                    color: PremiumColors.premiumGold.withOpacity(0.15),
+                    blurRadius: 16,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : null,
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(PremiumSpacing.lg),
               child: Row(
                 children: [
-                  // Credits icon
+                  // Credits display
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 64,
+                    height: 64,
                     decoration: BoxDecoration(
                       color: isPopular
-                          ? colorScheme.primaryContainer
-                          : colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
+                          ? PremiumColors.premiumGold.withOpacity(0.2)
+                          : PremiumColors.surfaceLight,
+                      borderRadius: BorderRadius.circular(PremiumRadius.lg),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.monetization_on,
-                          color: isPopular ? colorScheme.primary : Colors.grey,
+                        Text(
+                          isPopular ? '👑' : '💎',
+                          style: const TextStyle(fontSize: 24),
                         ),
                         Text(
                           '$totalCredits',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: isPopular ? colorScheme.primary : null,
-                              ),
+                          style: TextStyle(
+                            color: isPopular
+                                ? PremiumColors.premiumGold
+                                : PremiumColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: PremiumSpacing.lg),
 
                   // Info
                   Expanded(
@@ -448,15 +646,20 @@ class _CreditPackageCard extends StatelessWidget {
                       children: [
                         Text(
                           package['name_tr'] ?? '',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: const TextStyle(
+                            color: PremiumColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           '$credits kredi${bonusCredits > 0 ? ' + $bonusCredits bonus!' : ''}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: bonusCredits > 0 ? Colors.green : null,
-                              ),
+                          style: TextStyle(
+                            color: bonusCredits > 0
+                                ? PremiumColors.success
+                                : PremiumColors.textSecondary,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -468,47 +671,131 @@ class _CreditPackageCard extends StatelessWidget {
                     children: [
                       Text(
                         '${package['price_try']} ₺',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.primary,
-                            ),
+                        style: TextStyle(
+                          color: isPopular
+                              ? PremiumColors.premiumGold
+                              : PremiumColors.primaryPurple,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         '\$${package['price_usd']}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey,
-                            ),
+                        style: TextStyle(
+                          color: PremiumColors.textTertiary,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-          ),
 
-          // Popular badge
-          if (isPopular)
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(8),
+            // Popular badge
+            if (isPopular)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: PremiumSpacing.md,
+                    vertical: PremiumSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        PremiumColors.premiumGold,
+                        PremiumColors.premiumGoldDark,
+                      ],
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(PremiumRadius.xl),
+                      bottomLeft: Radius.circular(PremiumRadius.md),
+                    ),
+                  ),
+                  child: const Text(
+                    'POPÜLER',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                child: Text(
-                  'POPÜLER',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Watch ad for credits card
+class _WatchAdCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _WatchAdCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(PremiumSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              PremiumColors.accentCyan.withOpacity(0.15),
+              PremiumColors.primaryPurple.withOpacity(0.08),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(PremiumRadius.xl),
+          border: Border.all(
+            color: PremiumColors.accentCyan.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(PremiumSpacing.md),
+              decoration: BoxDecoration(
+                color: PremiumColors.accentCyan.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(PremiumRadius.lg),
+              ),
+              child: const Text('🎬', style: TextStyle(fontSize: 28)),
+            ),
+            const SizedBox(width: PremiumSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ücretsiz Kredi Kazan!',
+                    style: TextStyle(
+                      color: PremiumColors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Reklam izle, 1 kredi kazan',
+                    style: TextStyle(
+                      color: PremiumColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
-        ],
+            Icon(
+              Icons.chevron_right,
+              color: PremiumColors.accentCyan,
+            ),
+          ],
+        ),
       ),
     );
   }
