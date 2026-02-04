@@ -74,6 +74,18 @@ class PremiumColors {
   static const Color energySpiritualGlow = Color(0x405EEAD4);
 
   // ═══════════════════════════════════════════════════════════════════
+  // ACCENT COLORS
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Cyan accent for highlights
+  static const Color accentCyan = Color(0xFF5EEAD4);
+  static const Color accentCyanGlow = Color(0x405EEAD4);
+
+  /// Surface colors
+  static const Color surfaceLight = Color(0xFF252538);
+  static const Color surfaceMedium = Color(0xFF1E1E30);
+
+  // ═══════════════════════════════════════════════════════════════════
   // TEXT HIERARCHY
   // ═══════════════════════════════════════════════════════════════════
 
@@ -272,4 +284,16 @@ class MysticalStrings {
   static const String exploreMore = 'Daha Fazla Keşfet';
   static const String viewDetails = 'Detayları Gör';
   static const String startJourney = 'Yolculuğa Başla';
+
+  // Feature Hints
+  static const String coffeeFortuneHint = 'Fincanını çevir, kaderini oku';
+  static const String dreamHint = 'Rüyalarının gizemini çöz';
+  static const String tarotHint = 'Kartların sana ne söylüyor?';
+  static const String horoscopeHint = 'Yıldızlar bugün ne diyor?';
+  static const String natalChartHint = 'Doğum haritanı keşfet';
+
+  // Empty States
+  static const String noDataYet = 'Henüz veri yok';
+  static const String startExploring = 'Keşfetmeye başla';
+  static const String comingSoon = 'Çok yakında';
 }

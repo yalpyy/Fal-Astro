@@ -1,36 +1,46 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/premium_theme.dart';
 
-/// Disclaimer banner for entertainment purposes
+/// Premium disclaimer banner for entertainment purposes
 class DisclaimerBanner extends StatelessWidget {
   const DisclaimerBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: PremiumSpacing.md,
+        vertical: PremiumSpacing.sm,
+      ),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(8),
+        color: PremiumColors.surfaceLight.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(PremiumRadius.md),
         border: Border.all(
-          color: colorScheme.outline.withOpacity(0.3),
+          color: PremiumColors.borderSubtle,
         ),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.info_outline,
-            size: 20,
-            color: colorScheme.outline,
+          Container(
+            padding: const EdgeInsets.all(PremiumSpacing.xs),
+            decoration: BoxDecoration(
+              color: PremiumColors.primaryPurple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(PremiumRadius.sm),
+            ),
+            child: const Text(
+              '✨',
+              style: TextStyle(fontSize: 14),
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: PremiumSpacing.sm),
           Expanded(
             child: Text(
               'Bu içerik eğlence amaçlıdır ve profesyonel tavsiye yerine geçmez.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+              style: TextStyle(
+                color: PremiumColors.textTertiary,
+                fontSize: 11,
+                height: 1.3,
+              ),
             ),
           ),
         ],

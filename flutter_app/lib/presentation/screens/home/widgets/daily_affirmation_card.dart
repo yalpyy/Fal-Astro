@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/premium_theme.dart';
 import '../../../providers/auth_provider.dart';
 
 /// Provider for daily affirmation
-final dailyAffirmationProvider = FutureProvider.family<Map<String, dynamic>?, String>((ref, zodiacSign) async {
+final dailyAffirmationProvider =
+    FutureProvider.family<Map<String, dynamic>?, String>((ref, zodiacSign) async {
   final supabase = ref.read(safeSupabaseClientProvider);
   if (supabase == null) return null;
 
@@ -20,7 +22,7 @@ final dailyAffirmationProvider = FutureProvider.family<Map<String, dynamic>?, St
   return response;
 });
 
-/// Daily affirmation card widget
+/// Premium daily affirmation card widget
 class DailyAffirmationCard extends ConsumerWidget {
   final String? zodiacSign;
 
@@ -34,110 +36,117 @@ class DailyAffirmationCard extends ConsumerWidget {
     if (zodiacSign == null) return const SizedBox.shrink();
 
     final affirmationAsync = ref.watch(dailyAffirmationProvider(zodiacSign!));
-    final colorScheme = Theme.of(context).colorScheme;
 
     return affirmationAsync.when(
-      loading: () => _buildLoadingCard(context),
+      loading: () => _buildLoadingCard(),
       error: (_, __) => const SizedBox.shrink(),
       data: (affirmation) {
         if (affirmation == null) return const SizedBox.shrink();
 
-        return Card(
-          clipBehavior: Clip.antiAlias,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.primaryContainer,
-                  colorScheme.secondaryContainer,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                PremiumColors.primaryPurple.withOpacity(0.15),
+                PremiumColors.accentCyan.withOpacity(0.08),
+              ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.auto_awesome,
-                          color: colorScheme.primary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Günün Mesajı',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onPrimaryContainer,
-                                  ),
-                            ),
-                            Text(
-                              _getThemeLabel(affirmation['theme']),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onPrimaryContainer.withOpacity(0.7),
-                                  ),
-                            ),
+            borderRadius: BorderRadius.circular(PremiumRadius.xl),
+            border: Border.all(
+              color: PremiumColors.primaryPurple.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(PremiumSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(PremiumSpacing.sm),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            PremiumColors.primaryPurple.withOpacity(0.3),
+                            PremiumColors.accentCyan.withOpacity(0.2),
                           ],
                         ),
+                        borderRadius: BorderRadius.circular(PremiumRadius.md),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                      child: const Text(
+                        '✨',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ),
+                    const SizedBox(width: PremiumSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Günün Mesajı',
+                            style: TextStyle(
+                              color: PremiumColors.textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            _getThemeLabel(affirmation['theme']),
+                            style: TextStyle(
+                              color: PremiumColors.textTertiary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: PremiumSpacing.lg),
 
-                  // Affirmation text
-                  Text(
-                    affirmation['content_text'] ?? '',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onPrimaryContainer,
-                          fontStyle: FontStyle.italic,
-                          height: 1.5,
-                        ),
+                // Affirmation text
+                Text(
+                  affirmation['content_text'] ?? '',
+                  style: const TextStyle(
+                    color: PremiumColors.textSecondary,
+                    fontSize: 15,
+                    fontStyle: FontStyle.italic,
+                    height: 1.6,
                   ),
-                  const SizedBox(height: 16),
+                ),
+                const SizedBox(height: PremiumSpacing.lg),
 
-                  // Lucky info row
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 8,
-                    children: [
-                      if (affirmation['lucky_number'] != null)
-                        _LuckyChip(
-                          icon: Icons.casino,
-                          label: '${affirmation['lucky_number']}',
-                          tooltip: 'Şanslı Sayı',
-                        ),
-                      if (affirmation['lucky_color'] != null)
-                        _LuckyChip(
-                          icon: Icons.palette,
-                          label: affirmation['lucky_color'],
-                          tooltip: 'Şanslı Renk',
-                        ),
-                      if (affirmation['power_crystal'] != null)
-                        _LuckyChip(
-                          icon: Icons.diamond,
-                          label: affirmation['power_crystal'],
-                          tooltip: 'Güç Kristali',
-                        ),
-                    ],
-                  ),
-                ],
-              ),
+                // Lucky info row
+                Wrap(
+                  spacing: PremiumSpacing.sm,
+                  runSpacing: PremiumSpacing.sm,
+                  children: [
+                    if (affirmation['lucky_number'] != null)
+                      _LuckyChip(
+                        icon: '🎲',
+                        label: '${affirmation['lucky_number']}',
+                      ),
+                    if (affirmation['lucky_color'] != null)
+                      _LuckyChip(
+                        icon: '🎨',
+                        label: affirmation['lucky_color'],
+                      ),
+                    if (affirmation['power_crystal'] != null)
+                      _LuckyChip(
+                        icon: '💎',
+                        label: affirmation['power_crystal'],
+                      ),
+                  ],
+                ),
+              ],
             ),
           ),
         );
@@ -145,20 +154,36 @@ class DailyAffirmationCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildLoadingCard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 8),
-            Text(
-              'Günün mesajı yükleniyor...',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+  Widget _buildLoadingCard() {
+    return Container(
+      padding: const EdgeInsets.all(PremiumSpacing.xl),
+      decoration: BoxDecoration(
+        color: PremiumColors.cardBackground,
+        borderRadius: BorderRadius.circular(PremiumRadius.xl),
+        border: Border.all(
+          color: PremiumColors.borderSubtle,
+          width: 1,
         ),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: PremiumColors.primaryPurple,
+            ),
+          ),
+          const SizedBox(height: PremiumSpacing.sm),
+          Text(
+            'Günün mesajı yükleniyor...',
+            style: TextStyle(
+              color: PremiumColors.textTertiary,
+              fontSize: 13,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -166,59 +191,61 @@ class DailyAffirmationCard extends ConsumerWidget {
   String _getThemeLabel(String? theme) {
     switch (theme) {
       case 'love':
-        return '💕 Aşk';
+        return 'Aşk';
       case 'career':
-        return '💼 Kariyer';
+        return 'Kariyer';
       case 'health':
-        return '🌿 Sağlık';
+        return 'Sağlık';
       case 'spiritual':
-        return '🔮 Ruhsal';
+        return 'Ruhsal';
       case 'creativity':
-        return '🎨 Yaratıcılık';
+        return 'Yaratıcılık';
       case 'relationships':
-        return '👥 İlişkiler';
+        return 'İlişkiler';
       default:
-        return '✨ Genel';
+        return 'Genel';
     }
   }
 }
 
 class _LuckyChip extends StatelessWidget {
-  final IconData icon;
+  final String icon;
   final String label;
-  final String tooltip;
 
   const _LuckyChip({
     required this.icon,
     required this.label,
-    required this.tooltip,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Tooltip(
-      message: tooltip,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: colorScheme.surface.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(16),
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: PremiumSpacing.md,
+        vertical: PremiumSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: PremiumColors.surfaceLight,
+        borderRadius: BorderRadius.circular(PremiumRadius.full),
+        border: Border.all(
+          color: PremiumColors.borderSubtle,
+          width: 1,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: colorScheme.primary),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: PremiumSpacing.xs),
+          Text(
+            label,
+            style: const TextStyle(
+              color: PremiumColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
