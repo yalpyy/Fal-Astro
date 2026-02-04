@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/theme/premium_theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../screens/landing/landing_page.dart';
@@ -274,7 +275,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// Main shell with bottom navigation
+/// Main shell with premium bottom navigation
 class MainShell extends StatelessWidget {
   final Widget child;
 
@@ -283,15 +284,16 @@ class MainShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: PremiumColors.backgroundDark,
       body: child,
-      bottomNavigationBar: const MainBottomNav(),
+      bottomNavigationBar: const PremiumBottomNav(),
     );
   }
 }
 
-/// Bottom navigation bar with 5 tabs
-class MainBottomNav extends ConsumerWidget {
-  const MainBottomNav({super.key});
+/// Premium styled bottom navigation bar with glow effects
+class PremiumBottomNav extends ConsumerWidget {
+  const PremiumBottomNav({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -308,54 +310,134 @@ class MainBottomNav extends ConsumerWidget {
       currentIndex = 4;
     }
 
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: (index) {
-        switch (index) {
-          case 0:
-            context.goNamed(RouteNames.home);
-            break;
-          case 1:
-            context.goNamed(RouteNames.fortuneUpload);
-            break;
-          case 2:
-            context.goNamed(RouteNames.dreams);
-            break;
-          case 3:
-            context.goNamed(RouteNames.dailyHoroscope);
-            break;
-          case 4:
-            context.goNamed(RouteNames.profile);
-            break;
-        }
-      },
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
-          label: 'Ana Sayfa',
+    return Container(
+      decoration: BoxDecoration(
+        color: PremiumColors.cardBackground,
+        border: Border(
+          top: BorderSide(
+            color: PremiumColors.borderSubtle,
+            width: 1,
+          ),
         ),
-        NavigationDestination(
-          icon: Icon(Icons.coffee_outlined),
-          selectedIcon: Icon(Icons.coffee),
-          label: 'Fal',
+        boxShadow: [
+          BoxShadow(
+            color: PremiumColors.primaryPurple.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: PremiumSpacing.md,
+            vertical: PremiumSpacing.sm,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _PremiumNavItem(
+                icon: '🏠',
+                label: 'Ana Sayfa',
+                isSelected: currentIndex == 0,
+                onTap: () => context.goNamed(RouteNames.home),
+              ),
+              _PremiumNavItem(
+                icon: '☕',
+                label: 'Fal',
+                isSelected: currentIndex == 1,
+                onTap: () => context.goNamed(RouteNames.fortuneUpload),
+              ),
+              _PremiumNavItem(
+                icon: '🌙',
+                label: 'Rüya',
+                isSelected: currentIndex == 2,
+                onTap: () => context.goNamed(RouteNames.dreams),
+              ),
+              _PremiumNavItem(
+                icon: '✨',
+                label: 'Burçlar',
+                isSelected: currentIndex == 3,
+                onTap: () => context.goNamed(RouteNames.dailyHoroscope),
+              ),
+              _PremiumNavItem(
+                icon: '👤',
+                label: 'Profil',
+                isSelected: currentIndex == 4,
+                onTap: () => context.goNamed(RouteNames.profile),
+              ),
+            ],
+          ),
         ),
-        NavigationDestination(
-          icon: Icon(Icons.nights_stay_outlined),
-          selectedIcon: Icon(Icons.nights_stay),
-          label: 'Rüya',
+      ),
+    );
+  }
+}
+
+/// Single premium navigation item with glow
+class _PremiumNavItem extends StatelessWidget {
+  final String icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PremiumNavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: PremiumDurations.fast,
+        padding: const EdgeInsets.symmetric(
+          horizontal: PremiumSpacing.md,
+          vertical: PremiumSpacing.sm,
         ),
-        NavigationDestination(
-          icon: Icon(Icons.star_outline),
-          selectedIcon: Icon(Icons.star),
-          label: 'Burçlar',
+        decoration: BoxDecoration(
+          color: isSelected
+              ? PremiumColors.primaryPurple.withOpacity(0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(PremiumRadius.lg),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: PremiumColors.primaryPurple.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
         ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          selectedIcon: Icon(Icons.person),
-          label: 'Profil',
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              icon,
+              style: TextStyle(
+                fontSize: isSelected ? 24 : 22,
+              ),
+            ),
+            const SizedBox(height: 2),
+            AnimatedDefaultTextStyle(
+              duration: PremiumDurations.fast,
+              style: TextStyle(
+                color: isSelected
+                    ? PremiumColors.primaryPurple
+                    : PremiumColors.textTertiary,
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+              child: Text(label),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
