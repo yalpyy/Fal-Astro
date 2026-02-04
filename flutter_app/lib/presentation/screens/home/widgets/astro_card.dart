@@ -185,10 +185,10 @@ class AstroCard extends StatelessWidget {
                     icon: '🎨',
                     label: dailyAstro!.luckyColor,
                   ),
-                  if (dailyAstro!.luckyNumber != null)
+                  if (dailyAstro!.luckyNumbers.isNotEmpty)
                     _PremiumChip(
                       icon: '🔢',
-                      label: '${dailyAstro!.luckyNumber}',
+                      label: dailyAstro!.luckyNumbers.join(', '),
                     ),
                 ],
               ),
@@ -251,7 +251,6 @@ class _MiniEnergyRing extends StatelessWidget {
                 color: color,
                 size: 56,
                 strokeWidth: 4,
-                showGlow: true,
               ),
               Text(icon, style: const TextStyle(fontSize: 20)),
             ],

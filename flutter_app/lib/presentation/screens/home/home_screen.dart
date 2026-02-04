@@ -124,11 +124,38 @@ class HomeScreen extends ConsumerWidget {
                 const SizedBox(height: PremiumSpacing.xl),
 
                 // Inline Ad (Native style)
-                const InlineScrollAd(
-                  title: 'Astroloji Uygulaması',
-                  subtitle: 'Burçları keşfedin',
-                  imageUrl: null,
-                  onTap: null,
+                InlineScrollAd(
+                  label: 'Senin İçin',
+                  adContent: Container(
+                    padding: const EdgeInsets.all(PremiumSpacing.md),
+                    child: Row(
+                      children: [
+                        const Text('✨', style: TextStyle(fontSize: 32)),
+                        const SizedBox(width: PremiumSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Astroloji Uygulaması',
+                                style: TextStyle(
+                                  color: PremiumColors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                'Burçları keşfedin',
+                                style: TextStyle(
+                                  color: PremiumColors.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: PremiumSpacing.xl),
 
