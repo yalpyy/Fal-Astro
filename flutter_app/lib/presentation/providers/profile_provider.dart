@@ -168,3 +168,8 @@ final isOnboardedProvider = Provider<bool>((ref) {
 final zodiacSignProvider = Provider<String?>((ref) {
   return ref.watch(profileProvider).birthProfile?.zodiacSign;
 });
+
+/// Is admin provider
+final isAdminProvider = Provider<bool>((ref) {
+  return ref.watch(profileProvider).profile?.isAdmin ?? false;
+});

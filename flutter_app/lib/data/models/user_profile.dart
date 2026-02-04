@@ -25,6 +25,9 @@ class UserProfile extends Equatable {
   final DateTime? privacyAcceptedAt;
   final bool marketingConsent;
 
+  // Admin
+  final bool isAdmin;
+
   const UserProfile({
     required this.id,
     this.name,
@@ -44,6 +47,7 @@ class UserProfile extends Equatable {
     this.privacyVersion,
     this.privacyAcceptedAt,
     this.marketingConsent = false,
+    this.isAdmin = false,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -74,6 +78,7 @@ class UserProfile extends Equatable {
           ? DateTime.tryParse(json['privacy_accepted_at'] as String)
           : null,
       marketingConsent: json['marketing_consent'] as bool? ?? false,
+      isAdmin: json['is_admin'] as bool? ?? false,
     );
   }
 
@@ -97,6 +102,7 @@ class UserProfile extends Equatable {
       'privacy_version': privacyVersion,
       'privacy_accepted_at': privacyAcceptedAt?.toIso8601String(),
       'marketing_consent': marketingConsent,
+      'is_admin': isAdmin,
     };
   }
 
@@ -119,6 +125,7 @@ class UserProfile extends Equatable {
     String? privacyVersion,
     DateTime? privacyAcceptedAt,
     bool? marketingConsent,
+    bool? isAdmin,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -139,6 +146,7 @@ class UserProfile extends Equatable {
       privacyVersion: privacyVersion ?? this.privacyVersion,
       privacyAcceptedAt: privacyAcceptedAt ?? this.privacyAcceptedAt,
       marketingConsent: marketingConsent ?? this.marketingConsent,
+      isAdmin: isAdmin ?? this.isAdmin,
     );
   }
 
@@ -162,5 +170,6 @@ class UserProfile extends Equatable {
         privacyVersion,
         privacyAcceptedAt,
         marketingConsent,
+        isAdmin,
       ];
 }

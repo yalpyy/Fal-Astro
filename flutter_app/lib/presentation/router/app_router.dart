@@ -33,6 +33,7 @@ import 'route_names.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
   final profileState = ref.watch(profileProvider);
+  final isAdmin = profileState.profile?.isAdmin ?? false;
 
   return GoRouter(
     initialLocation: RoutePaths.splash,
@@ -74,6 +75,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Authenticated and onboarded - redirect away from auth/onboarding
       if (currentPath == RoutePaths.auth || currentPath == RoutePaths.onboarding) {
+        return RoutePaths.home;
+      }
+
+      // Admin route guard
+      if (currentPath == RoutePaths.admin && !isAdmin) {
         return RoutePaths.home;
       }
 
