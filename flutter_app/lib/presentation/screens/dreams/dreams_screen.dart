@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import '../../../core/theme/premium_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/loading/mystic_loading_overlay.dart';
 
-/// Dream interpretation screen
+/// Premium dream interpretation screen
 class DreamsScreen extends ConsumerStatefulWidget {
   const DreamsScreen({super.key});
 
@@ -42,7 +43,10 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
         if (mounted) {
           setState(() => _isListening = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Ses tanıma hatası: ${error.errorMsg}')),
+            SnackBar(
+              content: Text('Ses tanıma hatası: ${error.errorMsg}'),
+              backgroundColor: PremiumColors.error,
+            ),
           );
         }
       },
@@ -53,7 +57,10 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
   Future<void> _toggleListening() async {
     if (!_speechAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ses tanıma bu cihazda kullanılamıyor')),
+        SnackBar(
+          content: const Text('Ses tanıma bu cihazda kullanılamıyor'),
+          backgroundColor: PremiumColors.error,
+        ),
       );
       return;
     }
@@ -66,7 +73,6 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
       await _speech.listen(
         onResult: (result) {
           setState(() {
-            // Append to existing text with space
             final currentText = _dreamController.text;
             if (currentText.isNotEmpty && !currentText.endsWith(' ')) {
               _dreamController.text = '$currentText ${result.recognizedWords}';
@@ -143,248 +149,363 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rüya Yorumu'),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header Card
-            Card(
-              color: colorScheme.primaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.nightlight_round,
-                      size: 48,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Rüyanı Anlat',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.onPrimaryContainer,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Rüyanı detaylı bir şekilde yaz, mistik yorumunu alalım',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onPrimaryContainer.withOpacity(0.8),
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
+      backgroundColor: PremiumColors.backgroundDark,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(PremiumSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header Card
+              _PremiumHeaderCard(),
+              const SizedBox(height: PremiumSpacing.xl),
 
-            // Dream input form
-            if (_interpretation == null) ...[
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _dreamController,
-                      maxLines: 6,
-                      maxLength: 2000,
-                      decoration: InputDecoration(
-                        hintText: 'Rüyamda bir ormanda yürüyordum...',
-                        labelText: 'Rüyanı yaz',
-                        alignLabelWithHint: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        suffixIcon: Padding(
-                          padding: const EdgeInsets.only(right: 8, top: 8),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _VoiceInputButton(
-                                isListening: _isListening,
-                                isAvailable: _speechAvailable,
-                                onPressed: _toggleListening,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().length < 20) {
-                          return 'Lütfen rüyanı en az 20 karakter ile anlat';
-                        }
-                        return null;
-                      },
-                    ),
-                    if (_isListening)
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.mic, color: colorScheme.primary),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Dinleniyor... Rüyanızı anlatın',
-                                style: TextStyle(color: colorScheme.onPrimaryContainer),
-                              ),
-                            ),
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(height: 16),
-
-                    // Error message
-                    if (_error != null)
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.error, color: colorScheme.error),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _error!,
-                                style: TextStyle(color: colorScheme.onErrorContainer),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // Submit button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: FilledButton.icon(
-                        onPressed: _interpretDream,
-                        icon: const Icon(Icons.auto_awesome),
-                        label: const Text('Rüyamı Yorumla'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Info card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+              // Dream input form or interpretation
+              if (_interpretation == null) ...[
+                Form(
+                  key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Icon(Icons.info_outline, color: colorScheme.primary),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Nasıl Çalışır?',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ],
+                      _PremiumDreamInput(
+                        controller: _dreamController,
+                        isListening: _isListening,
+                        speechAvailable: _speechAvailable,
+                        onVoiceTap: _toggleListening,
                       ),
-                      const SizedBox(height: 12),
-                      _InfoItem(
-                        icon: Icons.edit,
-                        text: 'Rüyanı detaylı bir şekilde yaz',
-                      ),
-                      _InfoItem(
-                        icon: Icons.psychology,
-                        text: 'AI destekli analiz ile semboller çıkarılır',
-                      ),
-                      _InfoItem(
-                        icon: Icons.lightbulb,
-                        text: 'Kişisel yorum ve tavsiyeler alırsın',
-                      ),
-                      _InfoItem(
-                        icon: Icons.star,
-                        text: 'Şanslı sayılar ve ruh hali skoru',
+                      if (_isListening)
+                        _ListeningIndicator(),
+                      const SizedBox(height: PremiumSpacing.md),
+
+                      // Error message
+                      if (_error != null)
+                        _ErrorCard(error: _error!),
+
+                      // Submit button
+                      _PremiumSubmitButton(
+                        onPressed: _interpretDream,
                       ),
                     ],
                   ),
                 ),
-              ),
+
+                const SizedBox(height: PremiumSpacing.xl),
+
+                // How it works card
+                _HowItWorksCard(),
+              ],
+
+              // Interpretation result
+              if (_interpretation != null) ...[
+                _PremiumInterpretationCard(interpretation: _interpretation!),
+                const SizedBox(height: PremiumSpacing.lg),
+                _NewDreamButton(
+                  onPressed: () {
+                    setState(() {
+                      _interpretation = null;
+                      _dreamController.clear();
+                    });
+                  },
+                ),
+              ],
+
+              const SizedBox(height: PremiumSpacing.xl),
+
+              // Disclaimer
+              _PremiumDisclaimer(),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-            // Interpretation result
-            if (_interpretation != null) ...[
-              _InterpretationCard(interpretation: _interpretation!),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _interpretation = null;
-                    _dreamController.clear();
-                  });
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Yeni Rüya Yorumlat'),
-              ),
-            ],
-
-            const SizedBox(height: 24),
-
-            // Disclaimer
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber,
-                    size: 20,
-                    color: colorScheme.onSurfaceVariant,
+/// Premium header card
+class _PremiumHeaderCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(PremiumSpacing.xl),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF312E81).withOpacity(0.6),
+            const Color(0xFF1E1B4B).withOpacity(0.4),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(PremiumRadius.xl),
+        border: Border.all(
+          color: const Color(0xFF6366F1).withOpacity(0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withOpacity(0.2),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(PremiumSpacing.md),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(PremiumRadius.lg),
+            ),
+            child: const Text('🌙', style: TextStyle(fontSize: 36)),
+          ),
+          const SizedBox(width: PremiumSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Rüya Yorumu',
+                  style: TextStyle(
+                    color: PremiumColors.textPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Bu yorum eğlence amaçlıdır ve profesyonel psikolojik tavsiye yerine geçmez.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                ),
+                const SizedBox(height: PremiumSpacing.xs),
+                Text(
+                  MysticalStrings.dreamHint,
+                  style: TextStyle(
+                    color: PremiumColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Premium dream input field
+class _PremiumDreamInput extends StatelessWidget {
+  final TextEditingController controller;
+  final bool isListening;
+  final bool speechAvailable;
+  final VoidCallback onVoiceTap;
+
+  const _PremiumDreamInput({
+    required this.controller,
+    required this.isListening,
+    required this.speechAvailable,
+    required this.onVoiceTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: PremiumColors.cardBackground,
+        borderRadius: BorderRadius.circular(PremiumRadius.xl),
+        border: Border.all(color: PremiumColors.borderSubtle),
+      ),
+      child: Column(
+        children: [
+          TextFormField(
+            controller: controller,
+            maxLines: 6,
+            maxLength: 2000,
+            style: const TextStyle(
+              color: PremiumColors.textPrimary,
+              fontSize: 15,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Rüyamda bir ormanda yürüyordum...',
+              hintStyle: TextStyle(color: PremiumColors.textTertiary),
+              labelText: 'Rüyanı anlat',
+              labelStyle: TextStyle(color: PremiumColors.textSecondary),
+              alignLabelWithHint: true,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.all(PremiumSpacing.lg),
+              counterStyle: TextStyle(color: PremiumColors.textTertiary),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().length < 20) {
+                return 'Lütfen rüyanı en az 20 karakter ile anlat';
+              }
+              return null;
+            },
+          ),
+          // Voice button
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: PremiumSpacing.md,
+              vertical: PremiumSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: PremiumColors.borderSubtle),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Sesle anlat',
+                  style: TextStyle(
+                    color: PremiumColors.textTertiary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(width: PremiumSpacing.sm),
+                GestureDetector(
+                  onTap: speechAvailable ? onVoiceTap : null,
+                  child: Container(
+                    padding: const EdgeInsets.all(PremiumSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: isListening
+                          ? PremiumColors.primaryPurple
+                          : PremiumColors.surfaceLight,
+                      shape: BoxShape.circle,
+                      boxShadow: isListening
+                          ? [
+                              BoxShadow(
+                                color: PremiumColors.primaryPurple.withOpacity(0.5),
+                                blurRadius: 12,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Icon(
+                      isListening ? Icons.mic : Icons.mic_none,
+                      color: isListening
+                          ? Colors.white
+                          : PremiumColors.textSecondary,
+                      size: 20,
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Listening indicator
+class _ListeningIndicator extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(PremiumSpacing.md),
+      margin: const EdgeInsets.only(top: PremiumSpacing.md),
+      decoration: BoxDecoration(
+        color: PremiumColors.primaryPurple.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(PremiumRadius.lg),
+        border: Border.all(
+          color: PremiumColors.primaryPurple.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Text('🎙️', style: TextStyle(fontSize: 20)),
+          const SizedBox(width: PremiumSpacing.sm),
+          Expanded(
+            child: Text(
+              'Dinleniyor... Rüyanızı anlatın',
+              style: TextStyle(color: PremiumColors.textSecondary),
+            ),
+          ),
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: PremiumColors.primaryPurple,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Error card
+class _ErrorCard extends StatelessWidget {
+  final String error;
+
+  const _ErrorCard({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(PremiumSpacing.md),
+      margin: const EdgeInsets.only(bottom: PremiumSpacing.lg),
+      decoration: BoxDecoration(
+        color: PremiumColors.error.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(PremiumRadius.lg),
+        border: Border.all(color: PremiumColors.error.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error, color: PremiumColors.error),
+          const SizedBox(width: PremiumSpacing.sm),
+          Expanded(
+            child: Text(
+              error,
+              style: TextStyle(color: PremiumColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Premium submit button
+class _PremiumSubmitButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _PremiumSubmitButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(PremiumSpacing.lg),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF6366F1),
+              PremiumColors.primaryPurple,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(PremiumRadius.lg),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6366F1).withOpacity(0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('✨', style: TextStyle(fontSize: 20)),
+            const SizedBox(width: PremiumSpacing.sm),
+            const Text(
+              'Rüyamı Yorumla',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -394,8 +515,48 @@ class _DreamsScreenState extends ConsumerState<DreamsScreen> {
   }
 }
 
+/// How it works card
+class _HowItWorksCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(PremiumSpacing.lg),
+      decoration: BoxDecoration(
+        color: PremiumColors.cardBackground,
+        borderRadius: BorderRadius.circular(PremiumRadius.xl),
+        border: Border.all(color: PremiumColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('ℹ️', style: TextStyle(fontSize: 18)),
+              const SizedBox(width: PremiumSpacing.sm),
+              const Text(
+                'Nasıl Çalışır?',
+                style: TextStyle(
+                  color: PremiumColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: PremiumSpacing.lg),
+          _InfoItem(icon: '✏️', text: 'Rüyanı detaylı bir şekilde yaz'),
+          _InfoItem(icon: '🧠', text: 'AI destekli analiz ile semboller çıkarılır'),
+          _InfoItem(icon: '💡', text: 'Kişisel yorum ve tavsiyeler alırsın'),
+          _InfoItem(icon: '🎲', text: 'Şanslı sayılar ve ruh hali skoru'),
+        ],
+      ),
+    );
+  }
+}
+
+/// Info item
 class _InfoItem extends StatelessWidget {
-  final IconData icon;
+  final String icon;
   final String text;
 
   const _InfoItem({required this.icon, required this.text});
@@ -403,26 +564,34 @@ class _InfoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: PremiumSpacing.xs),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text)),
+          Text(icon, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: PremiumSpacing.md),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: PremiumColors.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _InterpretationCard extends StatelessWidget {
+/// Premium interpretation card
+class _PremiumInterpretationCard extends StatelessWidget {
   final Map<String, dynamic> interpretation;
 
-  const _InterpretationCard({required this.interpretation});
+  const _PremiumInterpretationCard({required this.interpretation});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final symbols = interpretation['symbols'] as List? ?? [];
     final emotions = interpretation['emotions'] as List? ?? [];
     final themes = interpretation['themes'] as List? ?? [];
@@ -433,235 +602,249 @@ class _InterpretationCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Main interpretation
-        Card(
-          color: colorScheme.primaryContainer,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+        Container(
+          padding: const EdgeInsets.all(PremiumSpacing.lg),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF312E81).withOpacity(0.5),
+                const Color(0xFF1E1B4B).withOpacity(0.3),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(PremiumRadius.xl),
+            border: Border.all(
+              color: const Color(0xFF6366F1).withOpacity(0.3),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text('✨', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: PremiumSpacing.sm),
+                  const Text(
+                    'Rüya Yorumun',
+                    style: TextStyle(
+                      color: PremiumColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: PremiumSpacing.lg),
+              Text(
+                interpretation['interpretation'] ?? '',
+                style: TextStyle(
+                  color: PremiumColors.textSecondary,
+                  fontSize: 15,
+                  height: 1.6,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: PremiumSpacing.lg),
+
+        // Mood Score
+        Container(
+          padding: const EdgeInsets.all(PremiumSpacing.lg),
+          decoration: BoxDecoration(
+            color: PremiumColors.cardBackground,
+            borderRadius: BorderRadius.circular(PremiumRadius.xl),
+            border: Border.all(color: PremiumColors.borderSubtle),
+          ),
+          child: Column(
+            children: [
+              const Text(
+                'Ruh Hali Skoru',
+                style: TextStyle(
+                  color: PremiumColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: PremiumSpacing.md),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(10, (index) {
+                  return Text(
+                    index < moodScore ? '⭐' : '☆',
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: index < moodScore
+                          ? PremiumColors.premiumGold
+                          : PremiumColors.textTertiary,
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: PremiumSpacing.sm),
+              Text(
+                '$moodScore/10',
+                style: TextStyle(
+                  color: PremiumColors.premiumGold,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: PremiumSpacing.lg),
+
+        // Symbols
+        if (symbols.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.all(PremiumSpacing.lg),
+            decoration: BoxDecoration(
+              color: PremiumColors.cardBackground,
+              borderRadius: BorderRadius.circular(PremiumRadius.xl),
+              border: Border.all(color: PremiumColors.borderSubtle),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: colorScheme.primary),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Rüya Yorumun',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onPrimaryContainer,
-                          ),
+                    const Text('🔮', style: TextStyle(fontSize: 18)),
+                    const SizedBox(width: PremiumSpacing.sm),
+                    const Text(
+                      'Semboller',
+                      style: TextStyle(
+                        color: PremiumColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  interpretation['interpretation'] ?? '',
-                  style: TextStyle(
-                    color: colorScheme.onPrimaryContainer,
-                    height: 1.5,
-                  ),
-                ),
+                const SizedBox(height: PremiumSpacing.lg),
+                ...symbols.map((s) => Padding(
+                      padding: const EdgeInsets.only(bottom: PremiumSpacing.md),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: PremiumSpacing.md,
+                              vertical: PremiumSpacing.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: PremiumColors.primaryPurple.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(PremiumRadius.md),
+                            ),
+                            child: Text(
+                              s['symbol'] ?? '',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: PremiumColors.primaryPurple,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: PremiumSpacing.md),
+                          Expanded(
+                            child: Text(
+                              s['meaning'] ?? '',
+                              style: TextStyle(
+                                color: PremiumColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
               ],
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-
-        // Mood Score
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text(
-                  'Ruh Hali Skoru',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(10, (index) {
-                    return Icon(
-                      index < moodScore ? Icons.star : Icons.star_border,
-                      color: index < moodScore ? Colors.amber : Colors.grey,
-                      size: 28,
-                    );
-                  }),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$moodScore/10',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Symbols
-        if (symbols.isNotEmpty)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.emoji_symbols, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Semboller',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ...symbols.map((s) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colorScheme.secondaryContainer,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                s['symbol'] ?? '',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.onSecondaryContainer,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(s['meaning'] ?? ''),
-                            ),
-                          ],
-                        ),
-                      )),
-                ],
-              ),
-            ),
-          ),
-        const SizedBox(height: 16),
+        const SizedBox(height: PremiumSpacing.lg),
 
         // Emotions & Themes
         Row(
           children: [
             Expanded(
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Duygular',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: emotions
-                            .map((e) => Chip(
-                                  label: Text(e.toString()),
-                                  visualDensity: VisualDensity.compact,
-                                ))
-                            .toList(),
-                      ),
-                    ],
-                  ),
-                ),
+              child: _ChipSection(
+                title: 'Duygular',
+                icon: '💭',
+                items: emotions.map((e) => e.toString()).toList(),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: PremiumSpacing.md),
             Expanded(
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Temalar',
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: themes
-                            .map((t) => Chip(
-                                  label: Text(t.toString()),
-                                  visualDensity: VisualDensity.compact,
-                                ))
-                            .toList(),
-                      ),
-                    ],
-                  ),
-                ),
+              child: _ChipSection(
+                title: 'Temalar',
+                icon: '🎭',
+                items: themes.map((t) => t.toString()).toList(),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: PremiumSpacing.lg),
 
         // Lucky numbers & Advice
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.casino, color: Colors.amber),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Şanslı Sayılar: ',
-                      style: Theme.of(context).textTheme.titleSmall,
+        Container(
+          padding: const EdgeInsets.all(PremiumSpacing.lg),
+          decoration: BoxDecoration(
+            color: PremiumColors.cardBackground,
+            borderRadius: BorderRadius.circular(PremiumRadius.xl),
+            border: Border.all(color: PremiumColors.borderSubtle),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('🎲', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: PremiumSpacing.sm),
+                  const Text(
+                    'Şanslı Sayılar: ',
+                    style: TextStyle(
+                      color: PremiumColors.textSecondary,
+                      fontSize: 14,
                     ),
-                    Text(
-                      luckyNumbers.join(', '),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
-                          ),
+                  ),
+                  Text(
+                    luckyNumbers.join(', '),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: PremiumColors.accentCyan,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              if (interpretation['advice'] != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: PremiumSpacing.lg),
+                  child: Container(
+                    height: 1,
+                    color: PremiumColors.borderSubtle,
+                  ),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('💡', style: TextStyle(fontSize: 18)),
+                    const SizedBox(width: PremiumSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        interpretation['advice'],
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: PremiumColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                if (interpretation['advice'] != null) ...[
-                  const Divider(height: 24),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.lightbulb, color: Colors.amber.shade700),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          interpretation['advice'],
-                          style: const TextStyle(fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
         ),
       ],
@@ -669,46 +852,139 @@ class _InterpretationCard extends StatelessWidget {
   }
 }
 
-/// Voice input button with animated feedback
-class _VoiceInputButton extends StatelessWidget {
-  final bool isListening;
-  final bool isAvailable;
-  final VoidCallback onPressed;
+/// Chip section widget
+class _ChipSection extends StatelessWidget {
+  final String title;
+  final String icon;
+  final List<String> items;
 
-  const _VoiceInputButton({
-    required this.isListening,
-    required this.isAvailable,
-    required this.onPressed,
+  const _ChipSection({
+    required this.title,
+    required this.icon,
+    required this.items,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+    return Container(
+      padding: const EdgeInsets.all(PremiumSpacing.md),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isListening ? colorScheme.primary : colorScheme.surfaceContainerHighest,
-        boxShadow: isListening
-            ? [
-                BoxShadow(
-                  color: colorScheme.primary.withOpacity(0.5),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ]
-            : null,
+        color: PremiumColors.cardBackground,
+        borderRadius: BorderRadius.circular(PremiumRadius.xl),
+        border: Border.all(color: PremiumColors.borderSubtle),
       ),
-      child: IconButton(
-        icon: Icon(
-          isListening ? Icons.mic : Icons.mic_none,
-          color: isListening ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(icon, style: const TextStyle(fontSize: 14)),
+              const SizedBox(width: PremiumSpacing.xs),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: PremiumColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: PremiumSpacing.sm),
+          Wrap(
+            spacing: PremiumSpacing.xs,
+            runSpacing: PremiumSpacing.xs,
+            children: items
+                .map((item) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: PremiumSpacing.sm,
+                        vertical: PremiumSpacing.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: PremiumColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(PremiumRadius.sm),
+                      ),
+                      child: Text(
+                        item,
+                        style: TextStyle(
+                          color: PremiumColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// New dream button
+class _NewDreamButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _NewDreamButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(PremiumSpacing.md),
+        decoration: BoxDecoration(
+          color: PremiumColors.surfaceLight,
+          borderRadius: BorderRadius.circular(PremiumRadius.lg),
+          border: Border.all(color: PremiumColors.borderSubtle),
         ),
-        onPressed: isAvailable ? onPressed : null,
-        tooltip: isAvailable
-            ? (isListening ? 'Kaydı durdur' : 'Sesle anlat')
-            : 'Ses tanıma kullanılamıyor',
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.refresh, color: PremiumColors.textSecondary, size: 20),
+            const SizedBox(width: PremiumSpacing.sm),
+            Text(
+              'Yeni Rüya Yorumlat',
+              style: TextStyle(
+                color: PremiumColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Premium disclaimer
+class _PremiumDisclaimer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: PremiumSpacing.md,
+        vertical: PremiumSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: PremiumColors.surfaceLight.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(PremiumRadius.md),
+        border: Border.all(color: PremiumColors.borderSubtle),
+      ),
+      child: Row(
+        children: [
+          const Text('✨', style: TextStyle(fontSize: 14)),
+          const SizedBox(width: PremiumSpacing.sm),
+          Expanded(
+            child: Text(
+              'Bu yorum eğlence amaçlıdır ve profesyonel psikolojik tavsiye yerine geçmez.',
+              style: TextStyle(
+                color: PremiumColors.textTertiary,
+                fontSize: 11,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

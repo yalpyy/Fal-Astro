@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
+import '../../../core/theme/premium_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../router/route_names.dart';
 
-/// Landing page with video background
-/// Shows welcome screen with video background, branding, and CTA button
+/// Premium landing page with mystical video background
 class LandingPage extends ConsumerStatefulWidget {
   const LandingPage({super.key});
 
@@ -15,14 +15,36 @@ class LandingPage extends ConsumerStatefulWidget {
   ConsumerState<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends ConsumerState<LandingPage> {
+class _LandingPageState extends ConsumerState<LandingPage>
+    with SingleTickerProviderStateMixin {
   late VideoPlayerController _videoController;
+  late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
   bool _isVideoInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _initializeVideo();
+    _initAnimations();
+  }
+
+  void _initAnimations() {
+    _animController = AnimationController(
+      vsync: this,
+      duration: PremiumDurations.slow,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutBack),
+    );
+
+    _animController.forward();
   }
 
   Future<void> _initializeVideo() async {
@@ -33,7 +55,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
     try {
       await _videoController.initialize();
       _videoController.setLooping(true);
-      _videoController.setVolume(0); // Muted
+      _videoController.setVolume(0);
       _videoController.play();
 
       if (mounted) {
@@ -49,6 +71,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
   @override
   void dispose() {
     _videoController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
@@ -69,9 +92,8 @@ class _LandingPageState extends ConsumerState<LandingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
+      backgroundColor: PremiumColors.backgroundDark,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -88,156 +110,205 @@ class _LandingPageState extends ConsumerState<LandingPage> {
               ),
             )
           else
-            // Fallback gradient while video loads
+            // Premium gradient fallback
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF1A1A2E),
-                    Color(0xFF16213E),
-                    Color(0xFF0F3460),
+                    PremiumColors.backgroundDark,
+                    const Color(0xFF1A1A2E),
+                    PremiumColors.primaryPurpleDark,
                   ],
                 ),
               ),
             ),
 
-          // 50% Black Overlay
+          // Dark overlay with gradient
           Container(
-            color: Colors.black.withOpacity(0.5),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.4),
+                  Colors.black.withOpacity(0.6),
+                  Colors.black.withOpacity(0.8),
+                ],
+              ),
+            ),
           ),
 
-          // Foreground Content
+          // Foreground Content with animations
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 60),
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _fadeAnimation.value,
+                  child: Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: child,
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 60),
 
-                  // Title at top-center
-                  const Text(
-                    'Fal & Astro',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black54,
-                          offset: Offset(2, 2),
-                          blurRadius: 8,
+                    // Title with glow
+                    ShaderMask(
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: [
+                          PremiumColors.primaryPurple,
+                          PremiumColors.accentCyan,
+                          PremiumColors.primaryPurple,
+                        ],
+                      ).createShader(bounds),
+                      child: const Text(
+                        'Fal & Astro',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 3,
                         ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Logo
-                  Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(35),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                        width: 2,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // Logo with glow effect
+                    Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            PremiumColors.primaryPurple.withOpacity(0.3),
+                            PremiumColors.accentCyan.withOpacity(0.2),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      size: 70,
-                      color: Colors.white,
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Welcome Text
-                  const Text(
-                    'Hoşgeldiniz',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Subtitle
-                  Text(
-                    'Kahve falı ve kişisel astroloji deneyiminiz\nburada başlıyor',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Start Button
-                  _GradientButton(
-                    text: 'Hazırsak Başlayalım',
-                    onPressed: _onStartPressed,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // KVKK Links
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _LegalLink(
-                        text: 'Gizlilik Sözleşmesi',
-                        onTap: () => context.pushNamed(RouteNames.privacyPolicy),
+                        borderRadius: BorderRadius.circular(40),
+                        border: Border.all(
+                          color: PremiumColors.primaryPurple.withOpacity(0.5),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: PremiumColors.primaryPurple.withOpacity(0.4),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                          ),
+                          BoxShadow(
+                            color: PremiumColors.accentCyan.withOpacity(0.2),
+                            blurRadius: 40,
+                            spreadRadius: 10,
+                          ),
+                        ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: const Center(
                         child: Text(
-                          '•',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 12,
+                          '✨',
+                          style: TextStyle(fontSize: 60),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // Welcome Text
+                    const Text(
+                      'Hoşgeldiniz',
+                      style: TextStyle(
+                        color: PremiumColors.textPrimary,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Subtitle
+                    Text(
+                      MysticalStrings.greeting,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: PremiumColors.textSecondary,
+                        fontSize: 16,
+                        height: 1.6,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      'Kahve falı ve kişisel astroloji deneyiminiz\nburada başlıyor',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: PremiumColors.textTertiary,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    // Premium Start Button
+                    _PremiumStartButton(
+                      text: 'Hazırsak Başlayalım',
+                      onPressed: _onStartPressed,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // KVKK Links
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _LegalLink(
+                          text: 'Gizlilik Sözleşmesi',
+                          onTap: () => context.pushNamed(RouteNames.privacyPolicy),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            '•',
+                            style: TextStyle(
+                              color: PremiumColors.textTertiary,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
-                      ),
-                      _LegalLink(
-                        text: 'Kullanım Koşulları',
-                        onTap: () => context.pushNamed(RouteNames.termsOfService),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // KVKK Notice
-                  Text(
-                    'Devam ederek KVKK kapsamındaki\naydınlatma metnini kabul etmiş olursunuz.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 11,
-                      height: 1.4,
+                        _LegalLink(
+                          text: 'Kullanım Koşulları',
+                          onTap: () => context.pushNamed(RouteNames.termsOfService),
+                        ),
+                      ],
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 16),
+
+                    // KVKK Notice
+                    Text(
+                      'Devam ederek KVKK kapsamındaki\naydınlatma metnini kabul etmiş olursunuz.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: PremiumColors.textTertiary.withOpacity(0.7),
+                        fontSize: 11,
+                        height: 1.4,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ),
           ),
@@ -247,12 +318,12 @@ class _LandingPageState extends ConsumerState<LandingPage> {
   }
 }
 
-/// Gradient button widget
-class _GradientButton extends StatelessWidget {
+/// Premium gradient button with glow
+class _PremiumStartButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
 
-  const _GradientButton({
+  const _PremiumStartButton({
     required this.text,
     required this.onPressed,
   });
@@ -265,19 +336,24 @@ class _GradientButton extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
-            Color(0xFF667eea),
-            Color(0xFF764ba2),
-            Color(0xFFf093fb),
+            PremiumColors.primaryPurple,
+            Color(0xFF9333EA),
+            PremiumColors.accentCyan,
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(PremiumRadius.full),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF667eea).withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: PremiumColors.primaryPurple.withOpacity(0.5),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: PremiumColors.accentCyan.withOpacity(0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -285,16 +361,26 @@ class _GradientButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(PremiumRadius.full),
           child: Center(
-            child: Text(
-              text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  '✨',
+                  style: TextStyle(fontSize: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -320,10 +406,10 @@ class _LegalLink extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          color: Colors.white.withOpacity(0.7),
+          color: PremiumColors.textSecondary,
           fontSize: 12,
           decoration: TextDecoration.underline,
-          decorationColor: Colors.white.withOpacity(0.5),
+          decorationColor: PremiumColors.textTertiary,
         ),
       ),
     );
